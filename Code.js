@@ -1,9 +1,8 @@
 // GLOBAL constants for U3A
 
 var U3A = {
-  WORDPRESS_PROGRAM_FILE_ID: "1svCAoJKW7FsnerJSPhLkzuXEcicdksA5fcV2UfaztR8" // file is - "U3A Current Program - Wordpress"
-};
-
+  WORDPRESS_PROGRAM_FILE_ID: '1svCAoJKW7FsnerJSPhLkzuXEcicdksA5fcV2UfaztR8', // file is - "U3A Current Program - Wordpress"
+}
 
 // [START apps_script_menu]
 /**
@@ -11,23 +10,22 @@ var U3A = {
  * Creates a custom menu.
  */
 function onOpen() {
-  var ui = SpreadsheetApp.getUi();
+  var ui = SpreadsheetApp.getUi()
   ui.createMenu('U3A Menu')
-    .addItem('First item', 'menuItem1')
+    .addItem('Import Calendar', 'loadCalendarSidebar')
     .addSeparator()
-    .addSubMenu(ui.createMenu('WordPress Actions')
-      .addItem('Update Course Program', 'makeCourseDetailForWordPress'))
-    .addToUi();
+    .addSubMenu(
+      ui
+        .createMenu('WordPress Actions')
+        .addItem('Update Course Program', 'makeCourseDetailForWordPress')
+    )
+    .addToUi()
 }
 
 /**
- * Handler for when menu item 2 is clicked.
+ * Handler  to load Calendar Sidebar.
  */
-function menuItem2() {
-  SpreadsheetApp.getUi() // Or DocumentApp or FormApp.
-    .alert('You clicked the second menu item!');
+function loadCalendarSidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('calendarSidebar').setTitle('U3A Tools')
+  SpreadsheetApp.getUi().showSidebar(html)
 }
-// [END apps_script_menu]
-
-
-

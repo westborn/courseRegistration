@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
+    />
+
+    <style>
+      body {
+        margin: 15px;
+      }
+      .script-application-sidebar-header {
+        background: blue;
+      }
+    </style>
+    <title>U3A Calendar</title>
+  </head>
+
+  <body>
+    <div>
+      <p>Choose a Calendar</p>
+
+      <!-- Group of radios - option 1 -->
+      <p class="mt-2 mb-0">Term</p>
+      <div class="form-check form-check-inline">
+        <input type="radio" class="form-check-input" id="term1" value="1" name="terms" />
+        <label class="form-check-label" for="term1">1</label>
+      </div>
+
+      <div class="form-check form-check-inline">
+        <input type="radio" class="form-check-input" id="term2" value="2" name="terms" />
+        <label class="form-check-label" for="term2">2</label>
+      </div>
+
+      <div class="form-check form-check-inline">
+        <input type="radio" class="form-check-input" id="term3" value="3" name="terms" />
+        <label class="form-check-label" for="term3">3</label>
+      </div>
+
+      <div class="form-check form-check-inline">
+        <input type="radio" class="form-check-input" id="term4" value="4" name="terms" />
+        <label class="form-check-label" for="term4">4</label>
+      </div>
+
+      <div class="form-group mt-2">
+        <label for="calendarName">Select Calendar</label>
+        <select class="form-control" id="calendarName"></select>
+      </div>
+
+      <button class="btn btn-primary mt-1" id="mainButton">Submit</button>
+    </div>
+
+    <!-- Optional JavaScript -->
+    <!-- jQuery first, then Popper.js, then Bootstrap JS -->
+    <script
+      src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+      integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+      integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+      crossorigin="anonymous"
+    ></script>
+    <script
+      src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+      integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+      crossorigin="anonymous"
+    ></script>
+    <script>
+      function afterLoad() {
+        google.script.run.withSuccessHandler(calendarReturned).getCalendarList()
+      }
+
+      function afterButtonClicked() {
+        var term = getRadioValue('terms')
+        var calendarId = document.getElementById('calendarName').value
+        var payload = { term, calendarId }
+        // console.log(payload)
+        google.script.run.withSuccessHandler(allDone).downloadCalendarEvents(payload)
+      }
+
+      function allDone() {
+        console.log("we're baaaack")
+      }
+
+      function getRadioValue(name) {
+        var radios = document.getElementsByName(name)
+        for (var i = 0; i < radios.length; i++) {
+          if (radios[i].checked) return radios[i].value
+        }
+      }
+
+      function calendarReturned(res) {
+        var calendarNames = document.getElementById('calendarName')
+
+        res.forEach((el) => {
+          var option = document.createElement('option')
+          option.value = el.id
+          option.textContent = el.summary
+          calendarNames.appendChild(option)
+        })
+      }
+
+      document.getElementById('mainButton').addEventListener('click', afterButtonClicked)
+      document.addEventListener('DOMContentLoaded', afterLoad)
+    </script>
+  </body>
+</html>

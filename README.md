@@ -6,7 +6,7 @@ This is a the basis of the tools built with Google Apps Script to manage the U3A
 
 ### Initially setup a project using Node Package Manager (npm)
 
-```bash
+```sh
 npm init -y
 npm install --save @types/google-apps-script
 clasp clone [your script ID]
@@ -14,7 +14,7 @@ clasp clone [your script ID]
 
 ### Initialize GIT to manage source contrtol
 
-```bash
+```sh
 git init
 git add . -n
 git add .
@@ -28,7 +28,7 @@ git commit -m "Initial Upload from manual project"
 - You’ll have an option there to initialize the repository with a README file, but I don’t.
 - Click the “Create repository” button.
 
-```bash
+```sh
 git remote add origin [info copied from github]
 git push origin master
 ```
