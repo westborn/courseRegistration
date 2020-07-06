@@ -82,7 +82,7 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       type: type,
       id: event.id || '',
       summary: event.summary || '',
-      description: event.description.replace(/(<([^>]+)>)/gi, '') || '',
+      description: event.description.replace(/(<([^>]+)>)/gi, '').trim() || '',
       location: event.location || '',
       startDateTime: new Date(event.start.dateTime).toLocaleString().replace(',', ''),
       endDateTime: new Date(event.end.dateTime).toLocaleString().replace(',', ''),
@@ -99,6 +99,25 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       meetingLabel: '',
       meetingCode: '',
       meetingPassword: '',
+    }
+
+    if (!courseEvent.presenter) {
+      const searchForPresenter = courseEvent.summary.match(/with(?!.*with)/i)
+      courseEvent.presenter =
+        searchForPresenter && searchForPresenter.index
+          ? courseEvent.summary.slice(searchForPresenter.index + 5).trim()
+          : ''
+    }
+
+    if (!courseEvent.contact) {
+      const searchForContact = courseEvent.description.indexOf('Contact:')
+      courseEvent.contact =
+        searchForContact > 0
+          ? courseEvent.description
+              .slice(searchForContact + 9)
+              .trim()
+              .replace('.', '')
+          : ''
     }
 
     if (event.recurrence) {
