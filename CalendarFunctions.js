@@ -74,6 +74,33 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
   return
 }
 
+const decodeDescription = (description) => {
+  return description
+    .replace(/(<([^>]+)>)/gi, '')
+    .replace(/&nbsp;/g, ' ')
+    .trim()
+}
+const decodeContact = (description) => {
+  const searchForContact = description.indexOf('Contact:')
+  if (searchForContact > 0) {
+    return description
+      .slice(searchForContact + 9)
+      .trim()
+      .replace('.', '')
+  } else {
+    return ''
+  }
+}
+
+const decodePresenter = (summary) => {
+  const searchForPresenter = summary.match(/with(?!.*with)/i)
+  if (searchForPresenter && searchForPresenter.index) {
+    return summary.slice(searchForPresenter.index + 5).trim()
+  } else {
+    return ''
+  }
+}
+
 // ====================================================================================
 //Get all necessary course events (dates, location, summary, description) as an array of objects
 function retrieveCalendarEvents(calendarId, eventRequest) {
@@ -82,7 +109,7 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       type: type,
       id: event.id || '',
       summary: event.summary || '',
-      description: event.description.replace(/(<([^>]+)>)/gi, '').trim() || '',
+      description: event.description ? decodeDescription(event.description) : '',
       location: event.location || '',
       startDateTime: new Date(event.start.dateTime).toLocaleString().replace(',', ''),
       endDateTime: new Date(event.end.dateTime).toLocaleString().replace(',', ''),
@@ -101,23 +128,13 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       meetingPassword: '',
     }
 
+    // get Presenter and Contact from the text of the calendar
     if (!courseEvent.presenter) {
-      const searchForPresenter = courseEvent.summary.match(/with(?!.*with)/i)
-      courseEvent.presenter =
-        searchForPresenter && searchForPresenter.index
-          ? courseEvent.summary.slice(searchForPresenter.index + 5).trim()
-          : ''
+      courseEvent.presenter = decodePresenter(courseEvent.summary)
     }
 
     if (!courseEvent.contact) {
-      const searchForContact = courseEvent.description.indexOf('Contact:')
-      courseEvent.contact =
-        searchForContact > 0
-          ? courseEvent.description
-              .slice(searchForContact + 9)
-              .trim()
-              .replace('.', '')
-          : ''
+      courseEvent.contact = decodeContact(courseEvent.description)
     }
 
     if (event.recurrence) {
