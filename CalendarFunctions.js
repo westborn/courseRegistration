@@ -252,13 +252,14 @@ const fmtDate = (dtStr) => {
 
 const decodeRecurText = (rule) => rule.toText()
 
+//get up to 10  dates for the recurring event
 const decodeRecurDates = (eventRule) => {
   // console.log(`decodeDates: ${JSON.stringify(eventRule, null, 2)}`)
   // just return dd-mmm (max 5)
   const futureDates = eventRule
-    .all((date, i) => i < 6)
+    .all((date, i) => i < 10)
     .map((dte) => fmtDate(new Date(dte)).slice(0, 6))
-  return `${futureDates.join(', ')}${futureDates.length > 5 ? '...' : ''}`
+  return `${futureDates.join(', ')}${futureDates.length > 9 ? '...' : ''}`
 }
 // Based on https://stackoverflow.com/a/54897035/1027723
 const flatten_ = (obj, prefix = '', res = {}) =>

@@ -55,7 +55,7 @@
         <select class="form-control" id="calendarName"></select>
       </div>
 
-      <button class="btn btn-primary mt-1" id="mainButton">Submit</button>
+      <button class="btn btn-primary mt-1" id="mainButton" disabled>Finding Calendar(s)</button>
     </div>
 
     <!-- Optional JavaScript -->
@@ -81,35 +81,48 @@
       }
 
       function afterButtonClicked() {
-        var term = getRadioValue('terms')
-        var calendarId = document.getElementById('calendarName').value
-        var payload = { term, calendarId }
+        console.log('afterButtonClicked')
+
+        const button = document.getElementById('mainButton')
+        button.textContent = 'Loading Events'
+        button.disabled = true
+
+        const term = getRadioValue('terms')
+        const calendarId = document.getElementById('calendarName').value
+        const payload = { term, calendarId }
         // console.log(payload)
         google.script.run.withSuccessHandler(allDone).downloadCalendarEvents(payload)
       }
 
       function allDone() {
-        console.log("we're baaaack")
+        console.log('allDone')
+
+        const button = document.getElementById('mainButton')
+        button.textContent = 'Import Calendar Events'
+        button.disabled = false
+        console.log('baaaack')
       }
 
       function getRadioValue(name) {
-        var radios = document.getElementsByName(name)
-        for (var i = 0; i < radios.length; i++) {
+        const radios = document.getElementsByName(name)
+        for (let i = 0; i < radios.length; i++) {
           if (radios[i].checked) return radios[i].value
         }
       }
 
       function calendarReturned(res) {
-        var calendarNames = document.getElementById('calendarName')
-
+        console.log('calendarReturned')
+        const calendarNames = document.getElementById('calendarName')
         res.forEach((el) => {
-          var option = document.createElement('option')
+          let option = document.createElement('option')
           option.value = el.id
           option.textContent = el.summary
           calendarNames.appendChild(option)
         })
+        const button = document.getElementById('mainButton')
+        button.textContent = 'Import Calendar Events'
+        button.disabled = false
       }
-
       document.getElementById('mainButton').addEventListener('click', afterButtonClicked)
       document.addEventListener('DOMContentLoaded', afterLoad)
     </script>
