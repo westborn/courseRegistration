@@ -19,6 +19,7 @@ function onOpen() {
         .createMenu('WordPress Actions')
         .addItem('Update Course Program', 'makeCourseDetailForWordPress')
     )
+    .addSubMenu(ui.createMenu('Zoom Actions').addItem('Schedule Zoom', 'createZoomMeeting'))
     .addToUi()
 }
 
