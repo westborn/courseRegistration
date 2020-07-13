@@ -121,11 +121,8 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       min: getNested(event, 'extendedProperties', 'private', 'min'),
       max: getNested(event, 'extendedProperties', 'private', 'max'),
       cost: getNested(event, 'conferenceData', 'entryPoints', 'entryPointType'),
-      isVideo: false,
-      meetingUri: '',
-      meetingLabel: '',
-      meetingCode: '',
-      meetingPassword: '',
+      isZoom: 'N',
+      zoomLink: '',
     }
 
     // get Presenter and Contact from the text of the calendar
@@ -144,16 +141,16 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       courseEvent.recurText = decodeRecurText(tmp)
       courseEvent.recurDates = decodeRecurDates(tmp)
     }
-
-    const entryPoints = getNested(event, 'conferenceData', 'entryPoints')
-    if (entryPoints && entryPoints[0].entryPointType === 'video') {
-      const el = entryPoints[0]
-      courseEvent.isVideo = true
-      courseEvent.meetingUri = el.uri
-      courseEvent.meetingLabel = el.label
-      courseEvent.meetingCode = el.meetingCode
-      courseEvent.meetingPassword = el.password
-    }
+    // Maybe used later if we schedule in Calendar
+    // const entryPoints = getNested(event, 'conferenceData', 'entryPoints')
+    // if (entryPoints && entryPoints[0].entryPointType === 'video') {
+    //   const el = entryPoints[0]
+    //   courseEvent.isVideo = true
+    //   courseEvent.meetingUri = el.uri
+    //   courseEvent.meetingLabel = el.label
+    //   courseEvent.meetingCode = el.meetingCode
+    //   courseEvent.meetingPassword = el.password
+    // }
     return courseEvent
   }
 
@@ -189,14 +186,14 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
   singleEvents.forEach((event) => {
     if (!event.recurrence) {
       if (event.recurringEventId) {
-        courseEvents.push(unpackEvent('exception', event))
-      } else courseEvents.push(unpackEvent('standalone', event))
+        courseEvents.push(unpackEvent('0-exception', event))
+      } else courseEvents.push(unpackEvent('3-standalone', event))
     } else {
-      courseEvents.push(unpackEvent('recurrent', event))
+      courseEvents.push(unpackEvent('1-recurrent', event))
     }
   })
 
-  const recurTypes = courseEvents.filter((event) => event.type === 'recurrent')
+  const recurTypes = courseEvents.filter((event) => event.type === '1-recurrent')
   recurTypes.forEach((recur) => {
     const instanceEvents = Calendar.Events.instances(calendarId, recur.id).items.filter(
       (event) =>
@@ -207,9 +204,9 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
         !(event.hasOwnProperty('recurrence') && event.recurrence.length > 1)
     )
     instanceEvents.forEach((el) => {
-      const exists = courseEvents.find((obj) => obj.type === 'exception' && obj.id === el.id)
+      const exists = courseEvents.find((obj) => obj.type === '0-exception' && obj.id === el.id)
       if (!exists) {
-        courseEvents.push(unpackEvent('instance', el))
+        courseEvents.push(unpackEvent('2-instance', el))
       }
     })
   })

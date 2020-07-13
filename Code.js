@@ -30,3 +30,14 @@ function loadCalendarSidebar() {
   var html = HtmlService.createHtmlOutputFromFile('calendarSidebar').setTitle('U3A Tools')
   SpreadsheetApp.getUi().showSidebar(html)
 }
+
+function appendCSV() {
+  var file = DriveApp.getFilesByName('test reg 2.csv').next()
+  Logger.log(file.getName())
+  var csvData = Utilities.parseCsv(file.getBlob().getDataAsString(), ',')
+  var sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CSV')
+  Logger.log(sheet.getName())
+  var lastRow = sheet.getLastRow()
+  Logger.log(lastRow)
+  sheet.getRange(lastRow + 1, 1, csvData.length, csvData[0].length).setValues(csvData)
+}
