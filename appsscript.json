@@ -17,6 +17,12 @@
     "macros": [{
       "menuName": "gs",
       "functionName": "gs"
+    }, {
+      "menuName": "Untitled Macro",
+      "functionName": "UntitledMacro"
+    }, {
+      "menuName": "Untitled Macro2",
+      "functionName": "UntitledMacro2"
     }]
   }
 }

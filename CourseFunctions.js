@@ -34,7 +34,25 @@ function buildDB() {
   dbSheet.getRange('B13:C').clear()
   // write the 2 columns to the sheet - starting at "B13"
   dbSheet.getRange(13, 2, result.length, 2).setValues(result)
+  
+  //Now create the 2 pivot tables (E12 and H12) from the Database
+
+  const sourceRange = "B12:C" + (result.length+12).toString()
+  const sourceData = dbSheet.getRange(sourceRange);
+  
+  const pivotTable1 = dbSheet.getRange('E12').createPivotTable(sourceData);
+  const pivotValue1 = pivotTable1.addPivotValue(2, SpreadsheetApp.PivotTableSummarizeFunction.COUNTA);
+  pivotValue1.setDisplayName('numberCourses');
+  const pivotGroup1 = pivotTable1.addRowGroup(2);
+
+  const pivotTable2 = dbSheet.getRange('H12').createPivotTable(sourceData);
+  const pivotValue2 = pivotTable2.addPivotValue(3, SpreadsheetApp.PivotTableSummarizeFunction.COUNTA);
+  pivotValue2.setDisplayName('numberAttendees');
+  const pivotGroup2 = pivotTable2.addRowGroup(3);  
+
 }
+
+
 
 function makeHyperlink() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -217,4 +235,46 @@ function courseDetailToSheet(course, outputTo) {
   outputTo
     .offset(0, 0, 1, 2)
     .setBorder(true, null, null, null, null, null, 'black', SpreadsheetApp.BorderStyle.SOLID)
+}
+
+
+function allRegistrationEmails() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const pdfSheet = ss.getSheetByName('Course Registration')
+  const dbSheet = ss.getSheetByName('Database')
+  let attendees = dbSheet.getRange('E13:E').getDisplayValues()
+  const lastAttendeeIndex = attendees.filter(String).length
+  // drop the last item - it is the Grand Total
+  attendees.length = lastAttendeeIndex -1
+  
+  attendees.forEach(attendee => { 
+    //push the first name into the PDF sheet
+    pdfSheet.getRange('K1').setValue(attendee[0])
+    print_courseRegister()
+  })
+}
+
+function selectedRegistrationEmails() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const pdfSheet = ss.getSheetByName('Course Registration')
+  const dbSheet = ss.getSheetByName('Database')
+ 
+  const selectedRange = SpreadsheetApp.getActiveSpreadsheet().getActiveRange()
+  selectedRange.activate();  
+  const selection = dbSheet.getSelection();
+  const firstColumn = selection.getActiveRange().getColumn()
+  const lastColumn = selection.getActiveRange().getLastColumn()
+
+  // Must select one column only and must be column "E" (5)
+  if (firstColumn != lastColumn || firstColumn != 5) {
+    showToast("You need to Select one/some Member Names on the DATABASE sheet",20)
+    return
+  }
+  
+  let attendees = selectedRange.getDisplayValues()  
+  attendees.forEach(attendee => { 
+    //push the first name into the PDF sheet
+    pdfSheet.getRange('K1').setValue(attendee[0])
+    print_courseRegister()
+  })
 }
