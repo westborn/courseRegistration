@@ -27,30 +27,75 @@ const getZoomUserId = () => {
   return id
 }
 
-const createZoomMeeting = () => {
-  //https://marketplace.zoom.us/docs/api-reference/zoom-api/meetings/meetingcreate#request-body
+function selectedZoomSessions() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet();
+  const zoomSheet = ss.getSheetByName("Calendar Download");
+
+  const selectedRange = SpreadsheetApp.getActiveSpreadsheet().getActiveRange();
+  selectedRange.activate();
+  const selection = zoomSheet.getSelection();
+  const firstColumn = selection.getActiveRange().getColumn();
+  const lastColumn = selection.getActiveRange().getLastColumn();
+
+  // Must select one column only and must be column "C" (3)
+  if (firstColumn != lastColumn || firstColumn != 3) {
+    showToast(
+      'You need to Select one/some Summary on the "Calendar Download" sheet',
+      20
+    );
+    return;
+  }
+  const headers = zoomSheet
+    .getRange(1, 1, 1, zoomSheet.getLastColumn())
+    .getValues()
+    .shift();
+  const firstRow = selectedRange.getRow();
+  const lastRow = selectedRange.getLastRow();
+  const data = selectedRange
+    .offset(0, -2, lastRow - firstRow + 1, headers.length)
+    .getValues();
+
   const meetingOptions = {
-    topic: 'Zoom Meeting created with Google Script',
     type: 2,
-    start_time: '2020-07-30T10:45:00',
     duration: 30,
-    timezone: 'Australia/Sydney',
-    password: 'u3a',
-    agenda: 'Zoom session testing from Sheets',
+    timezone: "Australia/Sydney",
+    password: "u3a",
+    agenda: "Zoom session testing from Sheets",
     settings: {
       use_pmi: true,
-      auto_recording: 'none',
+      auto_recording: "none",
       mute_upon_entry: true,
       join_before_host: true,
     },
-  }
+  };
 
-  const request = UrlFetchApp.fetch(`https://api.zoom.us/v2/users/${getZoomUserId()}/meetings`, {
-    method: 'POST',
-    contentType: 'application/json',
-    headers: { Authorization: `Bearer ${getZoomAccessToken()}` },
-    payload: JSON.stringify(meetingOptions),
-  })
-  const { join_url, id } = JSON.parse(request.getContentText())
-  Logger.log(`Zoom meeting ${id} created`, join_url)
+  data.forEach((row) => {
+    meetingOptions.topic = row[headers.indexOf("summary")];
+    const start_time = row[headers.indexOf("startDateTime")];
+    const end_time = row[headers.indexOf("endDateTime")];
+    const duration = dataDiffMinutes(end_time, start_time);
+    meetingOptions.duration = duration;
+
+    s = start_time.toLocaleString().split(/[^\d]/);
+    meetingOptions.start_time = `${s[2]}-${s[1]}-${s[0]}T${s[4]}:${s[5]}:${s[6]}`;
+
+    const request = UrlFetchApp.fetch(
+      `https://api.zoom.us/v2/users/${getZoomUserId()}/meetings`,
+      {
+        method: "POST",
+        contentType: "application/json",
+        headers: { Authorization: `Bearer ${getZoomAccessToken()}` },
+        payload: JSON.stringify(meetingOptions),
+      }
+    );
+    const { join_url, id } = JSON.parse(request.getContentText());
+    Logger.log(`Zoom meeting ${id} created`, join_url);
+  });
+
+  function dataDiffMinutes(dte1, dte2) {
+    const d1 = new Date(dte1);
+    const d2 = new Date(dte2);
+    let diff = (d2.getTime() - d1.getTime()) / 1000;
+    return Math.abs(Math.round(diff / 60));
+  }
 }
