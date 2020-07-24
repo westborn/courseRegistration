@@ -13,6 +13,7 @@ function onOpen() {
   var ui = SpreadsheetApp.getUi()
   ui.createMenu('U3A Menu')
     .addItem('Import Calendar', 'loadCalendarSidebar')
+    .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
     .addSeparator()
     .addSubMenu(
       ui.createMenu('WordPress Actions')
@@ -36,7 +37,7 @@ function loadCalendarSidebar() {
 }
 
 function appendCSV() {
-  const file = DriveApp.getFilesByName('test reg 2.csv').next()
+  const file = DriveApp.getFilesByName('Wordpress Enrolments.csv').next()
   const csvData = Utilities.parseCsv(file.getBlob().getDataAsString(), ',')
 
   // get just the headers that we want (columns 5 -> second last)
@@ -50,7 +51,7 @@ function appendCSV() {
   //    output name, email, [each course in alpha sequence]
   let result = [['name', 'email', ...courseSequence]]
   csvData.map((row) => {
-    let thisRow = [row[3], row[4], ...Array.from({ length: courseSequence.length })]
+    let thisRow = [row[3].trim(), row[4].trim(), ...Array.from({ length: courseSequence.length })]
     const courseCols = row.slice(5, row.length - 1)
     courseCols.map((col, idx) => {
       if (col != '') {
@@ -68,5 +69,12 @@ function appendCSV() {
   if (lastRow > 1) {
     sheet.deleteRows(2, lastRow - 1)
   }
- sheet.getRange(1, 1, result.length, result[0].length).setValues(result)
+  //Write the data back to the sheet
+  sheet.getRange(1, 1, result.length, result[0].length).setValues(result)
+ 
+  //set a formula in the last column as error checking 
+  sheet.getRange(1,courseSequence.length+3).setValue("errorCheck")
+  for (let i = 0; i < result.length-1; i++) {
+    sheet.getRange(i+2, courseSequence.length+3).setFormula(`vlookup(A${i+2},memberName,1,false)`)
+  }
 }
