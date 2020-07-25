@@ -1,3 +1,7 @@
+/**
+ * Get a list of all the users Calendars
+ * @return {object} containing the summary and id of each calendar found
+ */
 function getCalendarList() {
   var calendars
   let pageToken
@@ -21,9 +25,14 @@ function getCalendarList() {
   return result
 }
 
-// =============================================================================
-// get all the events for the term from the calendar
-
+/**
+ * get all the events for the term from a calendar and write them to the "Calendar Download" sheet
+ * @param {number} term number (1 - 4)
+ * @param {id} calendarId of the calendar to retrieve events from
+ * @return {object} containing the summary and id of each calendar found
+ *
+ * uses rrule library to decode recurrence events
+ */
 function downloadCalendarEvents({ term, calendarId } = {}) {
   eval(
     UrlFetchApp.fetch(
@@ -31,8 +40,6 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
     ).getContentText()
   )
 
-  //  console.log('transcribeCalendar')
-  //get details of where this app is running from
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheetOptions = ss.getSheetByName('Options')
   const sheetDownload = ss.getSheetByName('Calendar Download')
@@ -47,7 +54,6 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
 
   //  get the events and format them
   const courseEvents = retrieveCalendarEvents(calendarId, eventRequest)
-  //  console.log(JSON.stringify(events, null, 2))
 
   //clear the sheet we are going to download the events to
   sheetDownload.insertRowBefore(2)
@@ -60,10 +66,9 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
     sheetDownload.getRange(2, 1).setValue('No events Found')
     return
   }
-  //  console.log(courseEvents)
+
   const filteredEvents = courseEvents.filter((event) => event.type != '1-recurrent')
   const rows = filteredEvents.map((d) => flatten_(d))
-  //  console.log(rows)
   const heads = sheetDownload.getDataRange().offset(0, 0, 1).getValues()[0]
 
   // convert object data into a 2d array
@@ -75,12 +80,22 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
   return
 }
 
+/**
+ * remove any html tags and non-breaking-space from a string
+ * @param {string} description the string to be manipulated
+ * @return {string} the munged result
+ */
 const decodeDescription = (description) => {
   return description
     .replace(/(<([^>]+)>)/gi, '')
     .replace(/&nbsp;/g, ' ')
     .trim()
 }
+/**
+ * find an embedded contact name in a string
+ * @param {string} description the string to be searched
+ * @return {string} contact name, if found
+ */
 const decodeContact = (description) => {
   const searchForContact = description.indexOf('Contact:')
   if (searchForContact > 0) {
@@ -92,7 +107,11 @@ const decodeContact = (description) => {
     return ''
   }
 }
-
+/**
+ * find an embedded presenter name in a string
+ * @param {string} description the string to be searched
+ * @return {string} presenter name, if found
+ */
 const decodePresenter = (summary) => {
   const searchForPresenter = summary.match(/with(?!.*with)/i)
   if (searchForPresenter && searchForPresenter.index) {
@@ -102,8 +121,12 @@ const decodePresenter = (summary) => {
   }
 }
 
-// ====================================================================================
-//Get all necessary course events (dates, location, summary, description) as an array of objects
+/**
+ * Extract course events (dates, location, summary, description) as an array of objects
+ * @param {id} calendarId of the calendar to be extracted
+ * @param {object} eventRequest containing parametres for the calendar search (type of search, start date/time)
+ * @return {object} courseEvent
+ */
 function retrieveCalendarEvents(calendarId, eventRequest) {
   const unpackEvent = (type, event) => {
     const courseEvent = {
@@ -119,11 +142,11 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       recurDates: '',
       presenter: getNested(event, 'extendedProperties', 'private', 'presenter'),
       contact: getNested(event, 'extendedProperties', 'private', 'contact'),
-//      min: getNested(event, 'extendedProperties', 'private', 'min'),
-//      max: getNested(event, 'extendedProperties', 'private', 'max'),
-//      cost: getNested(event, 'extendedProperties', 'private', 'cost'),
-//      isZoom: 'N',
-//      zoomLink: '',
+      //      min: getNested(event, 'extendedProperties', 'private', 'min'),
+      //      max: getNested(event, 'extendedProperties', 'private', 'max'),
+      //      cost: getNested(event, 'extendedProperties', 'private', 'cost'),
+      //      isZoom: 'N',
+      //      zoomLink: '',
     }
 
     // get Presenter and Contact from the text of the calendar
@@ -222,9 +245,16 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
   return courseEvents
 }
 
+/**
+ * search for existence of nested object key and return value if found
+ * @see https://stackoverflow.com/questions/2631001/test-for-existence-of-nested-javascript-object-key
+ * @param {object} obj object to search
+ * @return {object} value of the property else null
+ */
 function getNested(obj, ...args) {
   return args.reduce((obj, level) => obj && obj[level], obj)
 }
+
 const monthNames = [
   'Jan',
   'Feb',

@@ -1,3 +1,8 @@
+/**
+ * Get data from the "RegistrationMaster" and populate the "Database"
+ * For all the columns that have a 1 - write the details to the database columns
+ * Recalculate the 2 pivot tables after the database is written back to the sheet
+ */
 function buildDB() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const ssId = ss.getId()
@@ -34,26 +39,33 @@ function buildDB() {
   dbSheet.getRange('B13:C').clear()
   // write the 2 columns to the sheet - starting at "B13"
   dbSheet.getRange(13, 2, result.length, 2).setValues(result)
-  
+
   //Now create the 2 pivot tables (E12 and H12) from the Database
 
-  const sourceRange = "B12:C" + (result.length+12).toString()
-  const sourceData = dbSheet.getRange(sourceRange);
-  
-  const pivotTable1 = dbSheet.getRange('E12').createPivotTable(sourceData);
-  const pivotValue1 = pivotTable1.addPivotValue(2, SpreadsheetApp.PivotTableSummarizeFunction.COUNTA);
-  pivotValue1.setDisplayName('numberCourses');
-  const pivotGroup1 = pivotTable1.addRowGroup(2);
+  const sourceRange = 'B12:C' + (result.length + 12).toString()
+  const sourceData = dbSheet.getRange(sourceRange)
 
-  const pivotTable2 = dbSheet.getRange('H12').createPivotTable(sourceData);
-  const pivotValue2 = pivotTable2.addPivotValue(3, SpreadsheetApp.PivotTableSummarizeFunction.COUNTA);
-  pivotValue2.setDisplayName('numberAttendees');
-  const pivotGroup2 = pivotTable2.addRowGroup(3);  
+  const pivotTable1 = dbSheet.getRange('E12').createPivotTable(sourceData)
+  const pivotValue1 = pivotTable1.addPivotValue(
+    2,
+    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
+  )
+  pivotValue1.setDisplayName('numberCourses')
+  const pivotGroup1 = pivotTable1.addRowGroup(2)
 
+  const pivotTable2 = dbSheet.getRange('H12').createPivotTable(sourceData)
+  const pivotValue2 = pivotTable2.addPivotValue(
+    3,
+    SpreadsheetApp.PivotTableSummarizeFunction.COUNTA
+  )
+  pivotValue2.setDisplayName('numberAttendees')
+  const pivotGroup2 = pivotTable2.addRowGroup(3)
 }
 
-
-
+/**
+ * Get the attendees from the sheet and populate a hyperlink with mailto: bcc items
+ * 2 Hyperlinks are coonstructed 1 for Outlook (with ; delimiter) and one for Mac (with , delimiter)
+ */
 function makeHyperlink() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheet = ss.getSheetByName('Attendance')
@@ -77,6 +89,12 @@ function makeHyperlink() {
   sheet.getRange('C6').setShowHyperlink(true)
 }
 
+/**
+ * Write a print area to a PDF for Attendance data on the sheet
+ * "O3" for the recipient
+ * "D10" for presenter
+ * "D8" for course
+ */
 function print_attendance() {
   makeHyperlink()
   var rangeNameToPrint = 'print_area_attendance'
@@ -111,6 +129,12 @@ function print_attendance() {
   return
 }
 
+/**
+ * Write a print area to a PDF for Course data on the sheet
+ * "K4" for the recipient name
+ * "K2" for the recipient email
+ * "B3" for Salutation (like "Hi George")
+ */
 function print_courseRegister() {
   var rangeNameToPrint = 'print_area_courseRegister'
 
@@ -144,6 +168,13 @@ function print_courseRegister() {
   return
 }
 
+/**
+ * Create a draft email
+ * @param {string} recipient for the email draft message
+ * @param {string} subject for the email
+ * @param {string} body of the email to send
+ * @param {File} file descriptor for the PDF attachment
+ */
 function createDraft(recipient, subject, body, file) {
   var resp = GmailApp.createDraft(recipient, subject, body, {
     attachments: [file.getAs(MimeType.PDF)],
@@ -152,6 +183,14 @@ function createDraft(recipient, subject, body, file) {
   //  Logger.log(resp);
 }
 
+/**
+ * Create a draft email about a Zoom session from the "Attendance" sheet
+ * "D8" for the course
+ * "D9" for the time
+ * "O3" for the recipient (presenter)
+ * "E14:E60" for the bcc recipients
+ *
+ */
 function createDraftZoomEmail() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheet = ss.getSheetByName('Attendance')
@@ -176,6 +215,12 @@ function createDraftZoomEmail() {
   //  Logger.log(resp);
 }
 
+/**
+ * Create a formatted sheet that is displayed natively by WorPress
+ * the wordPress sheet is pre-existing and the ID is a global reference
+ * the data comes from the "CourseDetails" sheet
+ *
+ */
 function makeCourseDetailForWordPress() {
   var rng = SpreadsheetApp.getActiveSpreadsheet()
     .getSheetByName('CourseDetails')
@@ -199,7 +244,14 @@ function makeCourseDetailForWordPress() {
   }
 }
 
-// pass in a course row as an array
+/**
+ * Create a formatted row from the CourseDetals sheet
+ * @param {object} course row from CourseDetails
+ * @param {range} outputTo range to write to on the sheet
+ *
+ * currently uses ordinal positions of the columns
+ * TODO - use column headings OR pass in an object
+ */
 function courseDetailToSheet(course, outputTo) {
   var bold = SpreadsheetApp.newTextStyle().setBold(true).build()
   var defaultFontSize = SpreadsheetApp.newTextStyle().setFontSize(12).build()
@@ -237,7 +289,9 @@ function courseDetailToSheet(course, outputTo) {
     .setBorder(true, null, null, null, null, null, 'black', SpreadsheetApp.BorderStyle.SOLID)
 }
 
-
+/**
+ * simple loop to call "print_courseRegister" for every row in the database
+ */
 function allRegistrationEmails() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const pdfSheet = ss.getSheetByName('Course Registration')
@@ -245,34 +299,37 @@ function allRegistrationEmails() {
   let attendees = dbSheet.getRange('E13:E').getDisplayValues()
   const lastAttendeeIndex = attendees.filter(String).length
   // drop the last item - it is the Grand Total
-  attendees.length = lastAttendeeIndex -1
-  
-  attendees.forEach(attendee => { 
+  attendees.length = lastAttendeeIndex - 1
+
+  attendees.forEach((attendee) => {
     //push the first name into the PDF sheet
     pdfSheet.getRange('K1').setValue(attendee[0])
     print_courseRegister()
   })
 }
 
+/**
+ * simple loop to call "print_courseRegister" for selected rows in the database
+ */
 function selectedRegistrationEmails() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const pdfSheet = ss.getSheetByName('Course Registration')
   const dbSheet = ss.getSheetByName('Database')
- 
+
   const selectedRange = SpreadsheetApp.getActiveSpreadsheet().getActiveRange()
-  selectedRange.activate();  
-  const selection = dbSheet.getSelection();
+  selectedRange.activate()
+  const selection = dbSheet.getSelection()
   const firstColumn = selection.getActiveRange().getColumn()
   const lastColumn = selection.getActiveRange().getLastColumn()
 
   // Must select one column only and must be column "E" (5)
   if (firstColumn != lastColumn || firstColumn != 5) {
-    showToast("You need to Select one/some Member Names on the DATABASE sheet",20)
+    showToast('You need to Select one/some Member Names on the DATABASE sheet', 20)
     return
   }
-  
-  let attendees = selectedRange.getDisplayValues()  
-  attendees.forEach(attendee => { 
+
+  let attendees = selectedRange.getDisplayValues()
+  attendees.forEach((attendee) => {
     //push the first name into the PDF sheet
     pdfSheet.getRange('K1').setValue(attendee[0])
     print_courseRegister()

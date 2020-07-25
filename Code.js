@@ -1,13 +1,14 @@
-// GLOBAL constants for U3A
-
+/**
+ * GLOBAL constants for U3A
+ * Change these to match the column names you are using for email
+ * recepient addresses and email sent column.
+ */
 var U3A = {
   WORDPRESS_PROGRAM_FILE_ID: '1svCAoJKW7FsnerJSPhLkzuXEcicdksA5fcV2UfaztR8', // file is - "U3A Current Program - Wordpress"
 }
 
-// [START apps_script_menu]
 /**
- * Handler for when a user opens the spreadsheet.
- * Creates a custom menu.
+ * Creates the menu items for user to run scripts on drop-down.
  */
 function onOpen() {
   var ui = SpreadsheetApp.getUi()
@@ -16,14 +17,17 @@ function onOpen() {
     .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
     .addSeparator()
     .addSubMenu(
-      ui.createMenu('WordPress Actions')
+      ui
+        .createMenu('WordPress Actions')
         .addItem('Update Course Program', 'makeCourseDetailForWordPress')
     )
     .addSeparator()
     .addSubMenu(
-      ui.createMenu('Registration Advice Emails')
+      ui
+        .createMenu('Registration Advice Emails')
         .addItem('Draft ALL Registration Emails', 'allRegistrationEmails')
-        .addItem('Draft SELECTED Registration Emails', 'selectedRegistrationEmails')    )  
+        .addItem('Draft SELECTED Registration Emails', 'selectedRegistrationEmails')
+    )
     .addSubMenu(ui.createMenu('Zoom Actions').addItem('Schedule Zoom', 'selectedZoomSessions'))
     .addToUi()
 }
@@ -36,6 +40,10 @@ function loadCalendarSidebar() {
   SpreadsheetApp.getUi().showSidebar(html)
 }
 
+/**
+ * Get a CSV file and write the transformed values to the "CSV" sheet
+ *
+ */
 function appendCSV() {
   const file = DriveApp.getFilesByName('Wordpress Enrolments.csv').next()
   const csvData = Utilities.parseCsv(file.getBlob().getDataAsString(), ',')
@@ -71,15 +79,12 @@ function appendCSV() {
   }
   //Write the data back to the sheet
   sheet.getRange(1, 1, result.length, result[0].length).setValues(result)
- 
-  //set a formula in the last column as error checking 
-  sheet.getRange(1,courseSequence.length+3).setValue("errorCheck")
-  for (let i = 0; i < result.length-1; i++) {
-    sheet.getRange(i+2, courseSequence.length+3).setFormula(`vlookup(A${i+2},memberName,1,false)`)
+
+  //set a formula in the last column as error checking
+  sheet.getRange(1, courseSequence.length + 3).setValue('errorCheck')
+  for (let i = 0; i < result.length - 1; i++) {
+    sheet
+      .getRange(i + 2, courseSequence.length + 3)
+      .setFormula(`vlookup(A${i + 2},memberName,1,false)`)
   }
 }
-
-
-
-
-
