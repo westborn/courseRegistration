@@ -61,7 +61,8 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
     return
   }
   //  console.log(courseEvents)
-  const rows = courseEvents.map((d) => flatten_(d))
+  const filteredEvents = courseEvents.filter((event) => event.type != '1-recurrent')
+  const rows = filteredEvents.map((d) => flatten_(d))
   //  console.log(rows)
   const heads = sheetDownload.getDataRange().offset(0, 0, 1).getValues()[0]
 
@@ -118,11 +119,11 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
       recurDates: '',
       presenter: getNested(event, 'extendedProperties', 'private', 'presenter'),
       contact: getNested(event, 'extendedProperties', 'private', 'contact'),
-      min: getNested(event, 'extendedProperties', 'private', 'min'),
-      max: getNested(event, 'extendedProperties', 'private', 'max'),
-      cost: getNested(event, 'conferenceData', 'entryPoints', 'entryPointType'),
-      isZoom: 'N',
-      zoomLink: '',
+//      min: getNested(event, 'extendedProperties', 'private', 'min'),
+//      max: getNested(event, 'extendedProperties', 'private', 'max'),
+//      cost: getNested(event, 'extendedProperties', 'private', 'cost'),
+//      isZoom: 'N',
+//      zoomLink: '',
     }
 
     // get Presenter and Contact from the text of the calendar

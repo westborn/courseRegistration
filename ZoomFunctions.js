@@ -37,8 +37,8 @@ function selectedZoomSessions() {
   const firstColumn = selection.getActiveRange().getColumn();
   const lastColumn = selection.getActiveRange().getLastColumn();
 
-  // Must select one column only and must be column "C" (3)
-  if (firstColumn != lastColumn || firstColumn != 3) {
+  // Must select one column only and must be column "A" (1)
+  if (firstColumn != lastColumn || firstColumn != 1) {
     showToast(
       'You need to Select one/some Summary on the "Calendar Download" sheet',
       20
