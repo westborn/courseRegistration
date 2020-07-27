@@ -123,7 +123,7 @@ function print_attendance() {
 
   var resp = GmailApp.createDraft(recipient, subject, body, {
     attachments: [pdfFile.getAs(MimeType.PDF)],
-    name: 'Automatic Emailer Script',
+    name: 'Bermagui U3A',
   })
 
   return
@@ -162,26 +162,26 @@ function print_courseRegister() {
 
   var resp = GmailApp.createDraft(recipient, subject, body, {
     attachments: [pdfFile.getAs(MimeType.PDF)],
-    name: 'Automatic Emailer Script',
+    name: 'Bermagui U3A',
   })
 
   return
 }
 
-/**
- * Create a draft email
- * @param {string} recipient for the email draft message
- * @param {string} subject for the email
- * @param {string} body of the email to send
- * @param {File} file descriptor for the PDF attachment
- */
-function createDraft(recipient, subject, body, file) {
-  var resp = GmailApp.createDraft(recipient, subject, body, {
-    attachments: [file.getAs(MimeType.PDF)],
-    name: 'Automatic Emailer Script',
-  })
-  //  Logger.log(resp);
-}
+// /**
+//  * Create a draft email
+//  * @param {string} recipient for the email draft message
+//  * @param {string} subject for the email
+//  * @param {string} body of the email to send
+//  * @param {File} file descriptor for the PDF attachment
+//  */
+// function createDraft(recipient, subject, body, file) {
+//   var resp = GmailApp.createDraft(recipient, subject, body, {
+//     attachments: [file.getAs(MimeType.PDF)],
+//     name: 'Automatic Emailer Script',
+//   })
+//   //  Logger.log(resp);
+// }
 
 /**
  * Create a draft email about a Zoom session from the "Attendance" sheet
@@ -211,6 +211,7 @@ function createDraftZoomEmail() {
   resp = GmailApp.createDraft(recipient, subject, body, {
     htmlBody: email_html,
     bcc: bccEmails,
+    name: 'Bermagui U3A',
   })
   //  Logger.log(resp);
 }
