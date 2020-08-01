@@ -191,7 +191,7 @@ function print_courseRegister() {
  * "E14:E60" for the bcc recipients
  *
  */
-function createDraftZoomEmail() {
+function createDraftZoomEmail1() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheet = ss.getSheetByName('Attendance')
 
@@ -217,8 +217,8 @@ function createDraftZoomEmail() {
 }
 
 /**
- * Create a formatted sheet that is displayed natively by WorPress
- * the wordPress sheet is pre-existing and the ID is a global reference
+ * Create a formatted sheet that is displayed natively by WordPress
+ * the WordPress sheet is pre-existing and the ID is a global reference
  * the data comes from the "CourseDetails" sheet
  *
  */
@@ -335,4 +335,140 @@ function selectedRegistrationEmails() {
     pdfSheet.getRange('K1').setValue(attendee[0])
     print_courseRegister()
   })
+}
+
+/**
+ * Create an email to all attendees of a course and include Zoom session details
+ * NOTE: This is used a few days prior to a session to send a link
+ *       to all the enrolled partgicipants
+ *
+ * @param {object} session
+ * @param {string} session.courseSummary of an existing course
+ * @param {string} session.startDateTime of the session
+ * @param {string} session.duration of the session
+ *
+ */
+function createZoomSessionEmail() {
+  const firstColSelected = SpreadsheetApp.getActive().getActiveRange().getColumn()
+  const lastColSelected = SpreadsheetApp.getActive().getActiveRange().getLastColumn()
+
+  if (SpreadsheetApp.getActive().getActiveSheet().getName() != 'Calendar Download') {
+    showToast('You need to select a title on the "Calendar Download" sheet', 20)
+    return null
+  }
+  if (firstColSelected != lastColSelected || firstColSelected != 1) {
+    showToast('You need to select ONE title only', 20)
+    return null
+  }
+
+  const rowSelected = SpreadsheetApp.getActive().getActiveRange().getRow()
+  const sessionData = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('Calendar Download')
+    .getDataRange()
+    .getValues()
+  const allSessions = getJsonArrayFromData(sessionData)
+
+  // selected row as an index minus the header row hence (-2)
+  const thisSession = allSessions[rowSelected - 2]
+  Logger.log('session: ', thisSession)
+  selectedSummary = thisSession.summary
+
+  //get courseDetail sheet
+  const courseData = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('CourseDetails')
+    .getDataRange()
+    .getValues()
+  const allCourses = getJsonArrayFromData(courseData)
+
+  //get memberDetail sheet
+  const memberData = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('MemberDetails')
+    .getDataRange()
+    .getValues()
+  const allMembers = getJsonArrayFromData(memberData)
+
+  //get the Database of who is attending which course (columns B:C)
+  const db = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Database')
+  const dbData = db.getRange('B12:C' + db.getLastRow()).getValues()
+  const allDB = getJsonArrayFromData(dbData)
+
+  const htmlBody = HtmlService.createTemplateFromFile('zoomReminder')
+  htmlBody.course = thisSession.summary
+  htmlBody.datetime = formatU3ADateTime(new Date(thisSession.startDateTime))
+  const email_html = htmlBody.evaluate().getContent()
+
+  const thisCourse = allCourses.find(
+    (course) => course.summary.toString().toLowerCase() === selectedSummary.toString().toLowerCase()
+  )
+  const recipient = thisCourse.email
+  const subject = 'U3A: ' + htmlBody.course + ' - ' + htmlBody.datetime
+  const body = subject
+
+  const membersGoing = allDB
+    .filter(
+      (dbEntry) =>
+        dbEntry.goingTo.toString().toLowerCase() === thisCourse.title.toString().toLowerCase()
+    )
+    .map((entry) => entry.memberName)
+  const memberEmails = membersGoing.map(
+    (name) =>
+      allMembers.find(
+        (member) => name.toString().toLowerCase() === member.memberName.toString().toLowerCase()
+      ).email
+  )
+  //flatten array and remove dups and drop empty strings
+  const bccEmails = [...new Set(memberEmails.flat())].filter(String).join(',')
+
+  resp = GmailApp.createDraft(recipient, subject, body, {
+    htmlBody: email_html,
+    bcc: bccEmails,
+    name: 'Bermagui U3A',
+  })
+  //  Logger.log(resp);
+}
+
+/**
+ * Formats a date to a "standard for U3A correspondence
+ * "ddd, dd mmm yy"
+ * from https://elijahmanor.com/format-js-dates-and-times
+ * @param {date} dte
+ * @returns {string} formatted date string
+ */
+function formatU3ADate(dte) {
+  const dateOptions = {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }
+
+  return new Date(dte).toLocaleDateString('en', dateOptions)
+}
+
+/**
+ * Formats a date to a "standard for U3A correspondence
+ * "ddd, dd mmm yy hh:mm AM"
+ *  * from https://elijahmanor.com/format-js-dates-and-times
+ * @param {date} dte
+ * @returns {string} formatted date string
+ */
+function formatU3ATime(dte) {
+  const timeOptions = {
+    hour12: true,
+    hour: 'numeric',
+    minute: '2-digit',
+  }
+
+  return new Date(dte).toLocaleTimeString('en', timeOptions)
+}
+
+/**
+ * Formats a date to a "standard" for U3A correspondence
+ * "ddd, dd mmm yy hh:mm AM"
+ * from https://elijahmanor.com/format-js-dates-and-times
+ * @param {date} dte
+ * @returns {string} formatted date string
+ */
+function formatU3ADateTime(dte) {
+  return `${formatU3ADate(dte)} ${formatU3ATime(dte)}`
 }

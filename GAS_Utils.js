@@ -105,6 +105,35 @@ function makePDFfromRange(selectedRange, fileName, folderName) {
 }
 
 /**
+ * Create an object from a 2 dimensional array (usually sheet data)
+ * from https://stackoverflow.com/questions/47555347/creating-a-json-object-from-google-sheets
+ *
+ * @param {array} data 2 dimensional array of rows with headings in first row
+ * @returns {array} of objects with keys from row 1 with values from each other row
+ *
+ */
+function getJsonArrayFromData(data) {
+  const result = []
+  const headers = data[0]
+  const cols = headers.length
+
+  for (var i = 1, l = data.length; i < l; i++) {
+    // get a row to fill the object
+    const row = data[i]
+    // clear object
+    const obj = {}
+    for (var col = 0; col < cols; col++) {
+      // fill object with new values
+      obj[headers[col]] = row[col]
+    }
+    // add object in a final result
+    result.push(obj)
+  }
+
+  return result
+}
+
+/**
  * Invokes a function, performing up to 5 retries with exponential backoff.
  * Retries with delays of approximately 1, 2, 4, 8 then 16 seconds for a total of
  * about 32 seconds before it gives up and rethrows the last error.

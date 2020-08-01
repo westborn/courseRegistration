@@ -105,41 +105,7 @@ function appendCSV() {
   for (let i = 0; i < result.length - 1; i++) {
     sheet
       .getRange(i + 2, courseSequence.length + 3)
-      .setFormula(`vlookup(A${i + 2},memberName,1,false)`)
+      .setFormula(`ArrayFormula(index(Members,match(TRUE, exact(A${i + 2},memberName),0),1))`)
+    // .setFormula(`vlookup(A${i + 2},memberName,1,false)`)
   }
-}
-
-function correct_courseRegister() {
-  var rangeNameToPrint = 'print_area_courseRegister'
-
-  var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var myNamedRanges = getNamedRangesA1(spreadsheet)
-  if (myNamedRanges[rangeNameToPrint] === 'undefined') {
-    showToast(
-      "No print area found. Please define one 'print_area_????' named range using Data > Named ranges.",
-      30
-    )
-    return
-  }
-  var selectedRange = spreadsheet.getRangeByName(myNamedRanges[rangeNameToPrint])
-  var sheetToExport = selectedRange.getSheet()
-  var memberName = sheetToExport.getRange('K4').getDisplayValue()
-  var fileName = memberName + ' - Enrolment Information.pdf'
-
-  var pdfFile = makePDFfromRange(selectedRange, fileName, 'Enrolment Information')
-
-  var recipient = sheetToExport.getRange('K2').getDisplayValue()
-  var subject = sheetToExport.getRange('K3').getDisplayValue()
-  var body =
-    sheetToExport.getRange('B3').getDisplayValue() +
-    '\n\nAttached is an updated registration with, we hope, the correct details for the sessions you registered for.' +
-    '\n\nSorry for the error in processing, we trust this is all OK now?' +
-    '\n\nYour registration details for this term are listed on the attached PDF.\n\nPlease let us know if there are any changes required.\n\n\nU3A Team'
-
-  var resp = GmailApp.createDraft(recipient, subject, body, {
-    attachments: [pdfFile.getAs(MimeType.PDF)],
-    name: 'Bermagui U3A',
-  })
-
-  return
 }
