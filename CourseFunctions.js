@@ -370,7 +370,6 @@ function createZoomSessionEmail() {
 
   // selected row as an index minus the header row hence (-2)
   const thisSession = allSessions[rowSelected - 2]
-  Logger.log('session: ', thisSession)
   selectedSummary = thisSession.summary
 
   //get courseDetail sheet
@@ -428,47 +427,41 @@ function createZoomSessionEmail() {
 }
 
 /**
- * Formats a date to a "standard for U3A correspondence
- * "ddd, dd mmm yy"
- * from https://elijahmanor.com/format-js-dates-and-times
- * @param {date} dte
- * @returns {string} formatted date string
- */
-function formatU3ADate(dte) {
-  const dateOptions = {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'short',
-    year: 'numeric',
-  }
-
-  return new Date(dte).toLocaleDateString('en', dateOptions)
-}
-
-/**
- * Formats a date to a "standard for U3A correspondence
- * "ddd, dd mmm yy hh:mm AM"
- *  * from https://elijahmanor.com/format-js-dates-and-times
- * @param {date} dte
- * @returns {string} formatted date string
- */
-function formatU3ATime(dte) {
-  const timeOptions = {
-    hour12: true,
-    hour: 'numeric',
-    minute: '2-digit',
-  }
-
-  return new Date(dte).toLocaleTimeString('en', timeOptions)
-}
-
-/**
  * Formats a date to a "standard" for U3A correspondence
- * "ddd, dd mmm yy hh:mm AM"
- * from https://elijahmanor.com/format-js-dates-and-times
+ * "ddd d-mmm-yyyy h:mm AM"
  * @param {date} dte
  * @returns {string} formatted date string
  */
 function formatU3ADateTime(dte) {
-  return `${formatU3ADate(dte)} ${formatU3ATime(dte)}`
+  const config = {
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    year: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: true,
+  }
+  const dateTimeFormat = new Intl.DateTimeFormat('en-AU', config)
+
+  const [
+    { value: weekday },
+    ,
+    { value: day },
+    ,
+    { value: month },
+    ,
+    { value: year },
+    ,
+    { value: hour },
+    ,
+    { value: minute },
+    ,
+    { value: second },
+    ,
+    { value: dayperiod },
+  ] = dateTimeFormat.formatToParts(new Date(dte))
+
+  return `${weekday} ${day}-${month}-${year} ${hour}:${minute}${dayperiod}`
 }

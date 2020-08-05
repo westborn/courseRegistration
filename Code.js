@@ -28,7 +28,12 @@ function onOpen() {
         .addItem('Draft ALL Registration Emails', 'allRegistrationEmails')
         .addItem('Draft SELECTED Registration Emails', 'selectedRegistrationEmails')
     )
-    .addSubMenu(ui.createMenu('Zoom Actions').addItem('Schedule Zoom', 'selectedZoomSessions'))
+    .addSubMenu(
+      ui
+        .createMenu('Zoom Actions from Calendar Download')
+        .addItem('Schedule Zoom Meeting', 'selectedZoomSessions')
+        .addItem('Email Zoom Session Advice', 'createZoomSessionEmail')
+    )
     .addToUi()
 }
 
@@ -106,6 +111,5 @@ function appendCSV() {
     sheet
       .getRange(i + 2, courseSequence.length + 3)
       .setFormula(`ArrayFormula(index(Members,match(TRUE, exact(A${i + 2},memberName),0),1))`)
-    // .setFormula(`vlookup(A${i + 2},memberName,1,false)`)
   }
 }
