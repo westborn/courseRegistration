@@ -151,7 +151,7 @@ function getJsonArrayFromData(data) {
  * @param {Function} func The anonymous or named function to call.
  * @param {Function} optLoggerFunction Optionally, you can pass a function that will be used to log to in the case of a retry.
  *                                     For example, Logger.log (no parentheses) will work.
- * @return {*} The value returned by the called function.
+ * @returns {*} The value returned by the called function.
  */
 function expBackOff(func, optLoggerFunction) {
   for (var n = 0; n < 6; n++) {
@@ -166,5 +166,46 @@ function expBackOff(func, optLoggerFunction) {
       }
       Utilities.sleep(Math.pow(2, n) * 1000 + Math.round(Math.random() * 1000))
     }
+  }
+}
+
+/**
+ * returns details about the selected cell/range in the currenty active sheet.
+ *
+ * @param {String} inSheet default 'Sheet1' - the sheet that must be active
+ * @param {number} oneColOnly default 0 - number of the column if selection should only be in one column - else 0
+ * @returns {object} data elements from the selecetd range
+ * @returns {Sheet object} sheetSelected
+ * @returns {string} colSelected
+ * @returns {string} rowSelected
+ * @returns {string} rangeSelected in A1 notation
+ * @returns {string} numRowsSelected
+ * @returns {string} numColsSelected
+ * @returns {string} activeCellValue - string, number, date etc
+ *
+ */
+function metaSelected(inSheet = 'Sheet1', oneColOnly = 0) {
+  const sheetSelected = SpreadsheetApp.getActive().getActiveSheet()
+  const activeRange = SpreadsheetApp.getActive().getActiveRange()
+  const firstColSelected = activeRange.getColumn()
+  const lastColSelected = activeRange.getLastColumn()
+
+  if (sheetSelected.getSheetName() != inSheet) {
+    showToast('You need to select a title on the "' + inSheet + '" sheet', 20)
+    return undefined
+  }
+  if (oneColOnly && (firstColSelected != lastColSelected || firstColSelected != oneColOnly)) {
+    showToast('You need to select ONE column only', 20)
+    return undefined
+  }
+
+  return {
+    sheetSelected,
+    rowSelected: activeRange.getRow(),
+    colSelected: activeRange.getColumn(),
+    activeCellValue: activeRange.getValue(),
+    rangeSelected: activeRange.getA1Notation(),
+    numRowsSelected: activeRange.getNumRows(),
+    numColsSelected: activeRange.getNumColumns(),
   }
 }

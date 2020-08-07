@@ -168,21 +168,6 @@ function print_courseRegister() {
   return
 }
 
-// /**
-//  * Create a draft email
-//  * @param {string} recipient for the email draft message
-//  * @param {string} subject for the email
-//  * @param {string} body of the email to send
-//  * @param {File} file descriptor for the PDF attachment
-//  */
-// function createDraft(recipient, subject, body, file) {
-//   var resp = GmailApp.createDraft(recipient, subject, body, {
-//     attachments: [file.getAs(MimeType.PDF)],
-//     name: 'Automatic Emailer Script',
-//   })
-//   //  Logger.log(resp);
-// }
-
 /**
  * Create a draft email about a Zoom session from the "Attendance" sheet
  * "D8" for the course
@@ -313,25 +298,17 @@ function allRegistrationEmails() {
  * simple loop to call "print_courseRegister" for selected rows in the database
  */
 function selectedRegistrationEmails() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const pdfSheet = ss.getSheetByName('Course Registration')
-  const dbSheet = ss.getSheetByName('Database')
-
-  const selectedRange = SpreadsheetApp.getActiveSpreadsheet().getActiveRange()
-  selectedRange.activate()
-  const selection = dbSheet.getSelection()
-  const firstColumn = selection.getActiveRange().getColumn()
-  const lastColumn = selection.getActiveRange().getLastColumn()
-
-  // Must select one column only and must be column "E" (5)
-  if (firstColumn != lastColumn || firstColumn != 5) {
-    showToast('You need to Select one/some Member Names on the DATABASE sheet', 20)
+  // Must select from the Database sheet and must be in column "E" (5)
+  const res = metaSelected('Database', 5)
+  if (!res) {
     return
   }
+  const pdfSheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Course Registration')
 
-  let attendees = selectedRange.getDisplayValues()
+  const { sheetSelected, rangeSelected } = res
+  let attendees = sheetSelected.getRange(rangeSelected).getDisplayValues()
   attendees.forEach((attendee) => {
-    //push the first name into the PDF sheet
+    //push the name into the PDF sheet
     pdfSheet.getRange('K1').setValue(attendee[0])
     print_courseRegister()
   })

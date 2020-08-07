@@ -1,28 +1,40 @@
 {
   "timeZone": "Australia/Sydney",
   "dependencies": {
-    "enabledAdvancedServices": [{
-      "userSymbol": "Sheets",
-      "serviceId": "sheets",
-      "version": "v4"
-    }, {
-      "userSymbol": "Calendar",
-      "serviceId": "calendar",
-      "version": "v3"
-    }]
+    "enabledAdvancedServices": [
+      {
+        "userSymbol": "Docs",
+        "serviceId": "docs",
+        "version": "v1"
+      },
+      {
+        "userSymbol": "Sheets",
+        "serviceId": "sheets",
+        "version": "v4"
+      },
+      {
+        "userSymbol": "Calendar",
+        "serviceId": "calendar",
+        "version": "v3"
+      }
+    ]
   },
   "exceptionLogging": "STACKDRIVER",
   "runtimeVersion": "V8",
   "sheets": {
-    "macros": [{
-      "menuName": "gs",
-      "functionName": "gs"
-    }, {
-      "menuName": "Untitled Macro",
-      "functionName": "UntitledMacro"
-    }, {
-      "menuName": "Untitled Macro2",
-      "functionName": "UntitledMacro2"
-    }]
+    "macros": [
+      {
+        "menuName": "gs",
+        "functionName": "gs"
+      },
+      {
+        "menuName": "Untitled Macro",
+        "functionName": "UntitledMacro"
+      },
+      {
+        "menuName": "Untitled Macro2",
+        "functionName": "UntitledMacro2"
+      }
+    ]
   }
 }

@@ -1,6 +1,6 @@
 /**
  * Get a list of all the users Calendars
- * @return {object} containing the summary and id of each calendar found
+ * @returns {object} containing the summary and id of each calendar found
  */
 function getCalendarList() {
   var calendars
@@ -29,7 +29,7 @@ function getCalendarList() {
  * get all the events for the term from a calendar and write them to the "Calendar Download" sheet
  * @param {number} term number (1 - 4)
  * @param {id} calendarId of the calendar to retrieve events from
- * @return {object} containing the summary and id of each calendar found
+ * @returns {object} containing the summary and id of each calendar found
  *
  * uses rrule library to decode recurrence events
  */
@@ -83,7 +83,7 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
 /**
  * remove any html tags and non-breaking-space from a string
  * @param {string} description the string to be manipulated
- * @return {string} the munged result
+ * @returns {string} the munged result
  */
 const decodeDescription = (description) => {
   return description
@@ -94,7 +94,7 @@ const decodeDescription = (description) => {
 /**
  * find an embedded contact name in a string
  * @param {string} description the string to be searched
- * @return {string} contact name, if found
+ * @returns {string} contact name, if found
  */
 const decodeContact = (description) => {
   const searchForContact = description.indexOf('Contact:')
@@ -110,7 +110,7 @@ const decodeContact = (description) => {
 /**
  * find an embedded presenter name in a string
  * @param {string} description the string to be searched
- * @return {string} presenter name, if found
+ * @returns {string} presenter name, if found
  */
 const decodePresenter = (summary) => {
   const searchForPresenter = summary.match(/with(?!.*with)/i)
@@ -125,7 +125,7 @@ const decodePresenter = (summary) => {
  * Extract course events (dates, location, summary, description) as an array of objects
  * @param {id} calendarId of the calendar to be extracted
  * @param {object} eventRequest containing parametres for the calendar search (type of search, start date/time)
- * @return {object} courseEvent
+ * @returns {object} courseEvent
  */
 function retrieveCalendarEvents(calendarId, eventRequest) {
   const unpackEvent = (type, event) => {
@@ -249,7 +249,7 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
  * search for existence of nested object key and return value if found
  * @see https://stackoverflow.com/questions/2631001/test-for-existence-of-nested-javascript-object-key
  * @param {object} obj object to search
- * @return {object} value of the property else null
+ * @returns {object} value of the property else null
  */
 function getNested(obj, ...args) {
   return args.reduce((obj, level) => obj && obj[level], obj)
