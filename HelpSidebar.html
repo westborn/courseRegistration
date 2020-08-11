@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <title>U3A Courses Help</title>
+  </head>
+  <style>
+    .container {
+      width: 300px;
+      overflow-x: hidden;
+      overflow-y: auto;
+    }
+    h4 {
+      margin: 0 0.5em 0 0;
+    }
+    li {
+      max-width: 100%;
+    }
+    ul {
+      margin: 0;
+      padding: 0.2em;
+    }
+    p {
+      margin: 0 0 0.3em 1.8em;
+    }
+    .color-with-pseudo {
+      list-style: none;
+    }
+    .color-with-pseudo li::before {
+      content: '•';
+      list-style-position: inside;
+      font-size: 130%;
+      line-height: 0;
+      margin: 0 0.3em 0 0.5em;
+      position: relative;
+      top: 0.08rem;
+      color: #72a951;
+    }
+  </style>
+  <body>
+    <div class="container">
+      <h2>U3A Course Actions</h2>
+      <h4>Database</h4>
+      <ul class="color-with-pseudo">
+        <li>
+          Update Database
+          <p>
+            Construct the Database from the RegistrationMaster sheet<br />
+            Note: Database and tables are completely rebuilt
+          </p>
+        </li>
+        <li>Registration Advice</li>
+        <p>
+          Create draft emails to individual enrollees for their sessions<br />
+          either "All" or "Selected" members in column "E"
+        </p>
+      </ul>
+      <h4>Attendance</h4>
+      <ul class="color-with-pseudo">
+        <li>Add hyperlinks</li>
+        <p>
+          Populate the hyperlink with bcc
+        </p>
+        <li>Make PDF and email</li>
+        <p>
+          Draft email to course contact with attendee list<br />
+          (also populates the hyperlink)
+        </p>
+      </ul>
+      <h4>Course Registration</h4>
+      <ul class="color-with-pseudo">
+        <li>Make PDF and email</li>
+        <p>
+          Draft PDF to enrollee with all classes listed
+        </p>
+      </ul>
+
+      <h4>CSV</h4>
+      <ul class="color-with-pseudo">
+        <li>Import "Wordpress Enrolment" CSV</li>
+        <p>
+          Import the CSV produced by WordPress enrolment process
+        </p>
+      </ul>
+
+      <h4>Calendar Download</h4>
+      <ul class="color-with-pseudo">
+        <li>Schedule Zoom meeting</li>
+        <p>
+          Add a session to Zoom for the selected calendar entries
+        </p>
+        <li>Email Zoom Session advice</li>
+        <p>
+          Draft email of upcoming zoom session to contact with bcc to each enrollee
+        </p>
+      </ul>
+    </div>
+  </body>
+</html>

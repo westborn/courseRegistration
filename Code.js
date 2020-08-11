@@ -13,6 +13,7 @@ var U3A = {
 function onOpen() {
   var ui = SpreadsheetApp.getUi()
   ui.createMenu('U3A Menu')
+    .addItem('Help', 'loadHelpSidebar')
     .addItem('Import Calendar', 'loadCalendarSidebar')
     .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
     .addSeparator()
@@ -25,8 +26,8 @@ function onOpen() {
     .addSubMenu(
       ui
         .createMenu('Registration Advice Emails')
-        .addItem('Draft ALL Registration Emails', 'allRegistrationEmails')
-        .addItem('Draft SELECTED Registration Emails', 'selectedRegistrationEmails')
+        .addItem('ALL Enrollees', 'allRegistrationEmails')
+        .addItem('SELECTED Enrollees', 'selectedRegistrationEmails')
     )
     .addSubMenu(
       ui
@@ -42,6 +43,14 @@ function onOpen() {
  */
 function loadCalendarSidebar() {
   var html = HtmlService.createHtmlOutputFromFile('calendarSidebar').setTitle('U3A Tools')
+  SpreadsheetApp.getUi().showSidebar(html)
+}
+
+/**
+ * Handler  to load Help Sidebar.
+ */
+function loadHelpSidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('HelpSidebar').setTitle('U3A Tools')
   SpreadsheetApp.getUi().showSidebar(html)
 }
 
