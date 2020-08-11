@@ -1,15 +1,31 @@
 /**
+ * simple loop to call "createAttendanceRegister" for selected courses
+ */
+function selectedAttendanceRegister() {
+  // Must select from the CourseDetails sheet and must be in column "A" (1)
+  const res = metaSelected('CourseDetails', 1)
+  if (!res) {
+    return
+  }
+  const { sheetSelected, rangeSelected } = res
+  let courses = sheetSelected.getRange(rangeSelected).getDisplayValues()
+  courses.forEach((course) => {
+    createAttendanceRegister(course)
+  })
+}
+
+/**
  * Create an attendance register for signup on Information & Registration day
  * NOTE: This uses a Google Doc as a template for the attendance register.
  *       The docId for the template is '1LF4g60AxrZoJnsxqS2Gat_9UCIhkfeHIyTlxeOBfZR8'
  *
- * @param {string} templateDocId default '1LF4g60AxrZoJnsxqS2Gat_9UCIhkfeHIyTlxeOBfZR8'
  * @param {string} courseSummary of an existing course
+ * @param {string} templateDocId default '1LF4g60AxrZoJnsxqS2Gat_9UCIhkfeHIyTlxeOBfZR8'
  *
  */
 function createAttendanceRegister(
-  templateDocId = '1LF4g60AxrZoJnsxqS2Gat_9UCIhkfeHIyTlxeOBfZR8',
-  courseSummary = 'How to buy wine you like ONLINE with Bhagya'
+  courseSummary = 'How to buy wine you like ONLINE with Bhagya',
+  templateDocId = '1LF4g60AxrZoJnsxqS2Gat_9UCIhkfeHIyTlxeOBfZR8'
 ) {
   //get courseDetail sheet
   const courseData = SpreadsheetApp.getActiveSpreadsheet()

@@ -9,94 +9,77 @@
   </head>
   <style>
     .container {
-      width: 300px;
-      overflow-x: hidden;
-      overflow-y: auto;
+      width: 290px;
     }
     h4 {
-      margin: 0 0.5em 0 0;
-    }
-    li {
-      max-width: 100%;
-    }
-    ul {
-      margin: 0;
-      padding: 0.2em;
+      margin: 1em 0 0 0;
     }
     p {
-      margin: 0 0 0.3em 1.8em;
+      margin: 0em 0 0 2em;
     }
-    .color-with-pseudo {
-      list-style: none;
-    }
-    .color-with-pseudo li::before {
-      content: '•';
-      list-style-position: inside;
-      font-size: 130%;
-      line-height: 0;
-      margin: 0 0.3em 0 0.5em;
+    .bullet {
       position: relative;
-      top: 0.08rem;
-      color: #72a951;
+      margin: auto 1em;
+    }
+
+    .bullet::after {
+      content: '';
+      position: absolute;
+      left: -0.5em;
+      top: 3px;
+      border: 0.35em solid transparent;
+      border-left-color: red;
     }
   </style>
   <body>
     <div class="container">
-      <h2>U3A Course Actions</h2>
-      <h4>Database</h4>
-      <ul class="color-with-pseudo">
-        <li>
-          Update Database
-          <p>
-            Construct the Database from the RegistrationMaster sheet<br />
-            Note: Database and tables are completely rebuilt
-          </p>
-        </li>
-        <li>Registration Advice</li>
-        <p>
-          Create draft emails to individual enrollees for their sessions<br />
-          either "All" or "Selected" members in column "E"
-        </p>
-      </ul>
-      <h4>Attendance</h4>
-      <ul class="color-with-pseudo">
-        <li>Add hyperlinks</li>
-        <p>
-          Populate the hyperlink with bcc
-        </p>
-        <li>Make PDF and email</li>
-        <p>
-          Draft email to course contact with attendee list<br />
-          (also populates the hyperlink)
-        </p>
-      </ul>
-      <h4>Course Registration</h4>
-      <ul class="color-with-pseudo">
-        <li>Make PDF and email</li>
-        <p>
-          Draft PDF to enrollee with all classes listed
-        </p>
-      </ul>
-
-      <h4>CSV</h4>
-      <ul class="color-with-pseudo">
-        <li>Import "Wordpress Enrolment" CSV</li>
-        <p>
-          Import the CSV produced by WordPress enrolment process
-        </p>
-      </ul>
+      <h2>U3A Course Automation</h2>
 
       <h4>Calendar Download</h4>
-      <ul class="color-with-pseudo">
-        <li>Schedule Zoom meeting</li>
-        <p>
-          Add a session to Zoom for the selected calendar entries
-        </p>
-        <li>Email Zoom Session advice</li>
-        <p>
-          Draft email of upcoming zoom session to contact with bcc to each enrollee
-        </p>
-      </ul>
+      <p class="bullet">Schedule Zoom meeting</p>
+      <p>
+        Schedule a session in zoom for the selected calendar entries
+      </p>
+      <p class="bullet">Email Zoom Session Advice</p>
+      <p>
+        Draft email zoom information to contact with bcc to each enrollee for the selected calendar
+        entries
+      </p>
+      <p class="bullet">Import Calendar</p>
+      <p>
+        Import google calendar entries<br />
+        Allows for calendar selection<br />
+        Replaces the entire Calendar Download sheet
+      </p>
+      <h4>Database</h4>
+      <p class="bullet">Email ALL Enrollees</p>
+      <p class="bullet">Email SELECTED Enrollees</p>
+      <p>
+        Create draft emails to individual enrollees for their sessions<br />
+        either "All" or members "Selected" in column "E"
+      </p>
+      <p class="bullet">Create Database</p>
+      <p>
+        Construct the database from the RegistrationMaster sheet<br />
+        Note: database and tables are completely rebuilt
+      </p>
+      <h4>Wordpress Actions</h4>
+      <p class="bullet">Update Course Program</p>
+      <p>
+        Update google sheet that wordpress uses to display the course program<br />
+        "U3A Current Program - Wordpress"
+      </p>
+      <p class="bullet">Import "Wordpress Enrolment" CSV</p>
+      <p>
+        Import the csv produced by wordPress enrolment process<br />
+        Replaces the entire CSV sheet
+      </p>
+      <h4>Other Actions</h4>
+      <p class="bullet">Course Signup Sheet(s)</p>
+      <p>
+        Produce checklist of all members to use during I&R signup<br />
+        Select one or more courses from the CourseDetails sheet
+      </p>
     </div>
   </body>
 </html>

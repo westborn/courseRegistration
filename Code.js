@@ -13,28 +13,34 @@ var U3A = {
 function onOpen() {
   var ui = SpreadsheetApp.getUi()
   ui.createMenu('U3A Menu')
-    .addItem('Help', 'loadHelpSidebar')
-    .addItem('Import Calendar', 'loadCalendarSidebar')
-    .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
-    .addSeparator()
     .addSubMenu(
       ui
-        .createMenu('WordPress Actions')
-        .addItem('Update Course Program', 'makeCourseDetailForWordPress')
-    )
-    .addSeparator()
-    .addSubMenu(
-      ui
-        .createMenu('Registration Advice Emails')
-        .addItem('ALL Enrollees', 'allRegistrationEmails')
-        .addItem('SELECTED Enrollees', 'selectedRegistrationEmails')
-    )
-    .addSubMenu(
-      ui
-        .createMenu('Zoom Actions from Calendar Download')
+        .createMenu('Calendar Download')
         .addItem('Schedule Zoom Meeting', 'selectedZoomSessions')
         .addItem('Email Zoom Session Advice', 'createZoomSessionEmail')
+        .addItem('Import Calendar', 'loadCalendarSidebar')
     )
+    .addSeparator()
+    .addSubMenu(
+      ui
+        .createMenu('Database')
+        .addItem('Email ALL Enrollees', 'allRegistrationEmails')
+        .addItem('Email SELECTED Enrollees', 'selectedRegistrationEmails')
+        .addItem('Create Database', 'buildDB')
+    )
+    .addSeparator()
+    .addSubMenu(
+      ui
+        .createMenu('Wordpress Actions')
+        .addItem('Update Course Program', 'makeCourseDetailForWordPress')
+        .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
+    )
+    .addSeparator()
+    .addSubMenu(
+      ui.createMenu('Other Actions').addItem('I&R Enrolment Sheet', 'selectedAttendanceRegister')
+    )
+    .addSeparator()
+    .addItem('Help', 'loadHelpSidebar')
     .addToUi()
 }
 
@@ -50,12 +56,8 @@ function loadCalendarSidebar() {
  * Handler  to load Help Sidebar.
  */
 function loadHelpSidebar() {
-  var html = HtmlService.createHtmlOutputFromFile('HelpSidebar').setTitle('U3A Tools')
+  var html = HtmlService.createHtmlOutputFromFile('HelpSidebar').setTitle('U3A Tools Help')
   SpreadsheetApp.getUi().showSidebar(html)
-}
-
-function btn_buildDB() {
-  buildDB()
 }
 
 function btn_makeHyperlink() {
