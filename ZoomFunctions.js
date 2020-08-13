@@ -57,7 +57,7 @@ function selectedZoomSessions() {
     meetingOptions.topic = row[headers.indexOf('summary')]
     const start_time = row[headers.indexOf('startDateTime')]
     const end_time = row[headers.indexOf('endDateTime')]
-    const duration = dataDiffMinutes(end_time, start_time)
+    const duration = dateDiffMinutes(end_time, start_time)
     meetingOptions.duration = duration
 
     s = start_time
@@ -81,11 +81,4 @@ function selectedZoomSessions() {
     // const { join_url, id } = JSON.parse(request.getContentText())
     // Logger.log(`Zoom meeting ${id} created`, join_url)
   })
-
-  function dataDiffMinutes(dte1, dte2) {
-    const d1 = new Date(dte1)
-    const d2 = new Date(dte2)
-    let diff = (d2.getTime() - d1.getTime()) / 1000
-    return Math.abs(Math.round(diff / 60))
-  }
 }

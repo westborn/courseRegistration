@@ -209,3 +209,44 @@ function metaSelected(inSheet = 'Sheet1', oneColOnly = 0) {
     numColsSelected: activeRange.getNumColumns(),
   }
 }
+
+function dateDiffMinutes(dte1, dte2) {
+  const d1 = new Date(dte1)
+  const d2 = new Date(dte2)
+  let diff = (d2.getTime() - d1.getTime()) / 1000
+  return Math.abs(Math.round(diff / 60))
+}
+
+/**
+ * formats a date to be dd/mm/yyyy hh:mm
+ *
+ * @param {Date Object} dte
+ * @returns {string} formatted date
+ */
+function googleSheetDateTime(dte) {
+  return new Date(dte)
+    .toLocaleString('en-AU', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false,
+    })
+    .replace(',', '')
+}
+
+function getTextTime(value) {
+  if (value === null) {
+    return ''
+  }
+  if (value <= 0) {
+    return ''
+  }
+  const hours = Math.floor(value / 60)
+  const minutes = value % 60
+  var hour = hours > 1 ? hours + 'hrs' : hours + 'hr'
+  var hour = hours === 0 ? (hour = '') : hour
+  var min = minutes === 0 ? '' : minutes === 1 ? minutes + 'min' : minutes + 'mins'
+  return `${hour} ${min}`.trim()
+}

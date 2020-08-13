@@ -6,10 +6,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
 
     <title>U3A Courses Help</title>
+    <link rel="stylesheet" href="https://ssl.gstatic.com/docs/script/css/add-ons1.css" />
   </head>
   <style>
-    .container {
+    .sidebar {
       width: 290px;
+      padding: 3px;
+    }
+    .branding-below {
+      bottom: 40px;
+      top: 0;
     }
     h4 {
       margin: 1em 0 0 0;
@@ -32,9 +38,7 @@
     }
   </style>
   <body>
-    <div class="container">
-      <h2>U3A Course Automation</h2>
-
+    <div class="sidebar branding-below">
       <h4>Calendar Download</h4>
       <p class="bullet">Schedule Zoom meeting</p>
       <p>
@@ -56,12 +60,12 @@
       <p class="bullet">Email SELECTED Enrollees</p>
       <p>
         Create draft emails to individual enrollees for their sessions<br />
-        either "All" or members "Selected" in column "E"
+        either all OR members selected in column E
       </p>
       <p class="bullet">Create Database</p>
       <p>
         Construct the database from the RegistrationMaster sheet<br />
-        Note: database and tables are completely rebuilt
+        Replaces the entire database and tables
       </p>
       <h4>Wordpress Actions</h4>
       <p class="bullet">Update Course Program</p>
@@ -80,6 +84,14 @@
         Produce checklist of all members to use during I&R signup<br />
         Select one or more courses from the CourseDetails sheet
       </p>
+    </div>
+    <div class="sidebar bottom">
+      <img
+        alt="Add-on logo"
+        width="50"
+        src="https://bermagui.u3anet.org.au/wp-content/uploads/2018/11/U3A_Bermagui_Logo-154x70.png"
+      />
+      <span class="secondary">Course Automation</span>
     </div>
   </body>
 </html>

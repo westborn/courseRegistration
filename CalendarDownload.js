@@ -29,17 +29,8 @@ function getCalendarList() {
  * get all the events for the term from a calendar and write them to the "Calendar Download" sheet
  * @param {number} term number (1 - 4)
  * @param {id} calendarId of the calendar to retrieve events from
- * @returns {object} containing the summary and id of each calendar found
- *
- * uses rrule library to decode recurrence events
  */
-function downloadCalendarEvents({ term, calendarId } = {}) {
-  eval(
-    UrlFetchApp.fetch(
-      'https://jakubroztocil.github.io/rrule/dist/es5/rrule-tz.min.js'
-    ).getContentText()
-  )
-
+function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmail.com' } = {}) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheetOptions = ss.getSheetByName('Options')
   const sheetDownload = ss.getSheetByName('Calendar Download')
@@ -67,8 +58,36 @@ function downloadCalendarEvents({ term, calendarId } = {}) {
     return
   }
 
+  // drop all the recurrent event types (maybe used later?)
   const filteredEvents = courseEvents.filter((event) => event.type != '1-recurrent')
-  const rows = filteredEvents.map((d) => flatten_(d))
+
+  //for each course - loop thru all sessions of the same name and resolve days/dates the course is scheduled.
+
+  sheetEvents = filteredEvents.map((course) => {
+    const thisSession = filteredEvents.filter((session) => session.summary === course.summary)
+    const days = thisSession.map((el) => new Date(el.eventStartDateTime))
+    let dedupDates = Array.from(new Set(days))
+    dedupDates.sort((a, b) => {
+      return new Date(a) - new Date(b)
+    })
+    course.datesScheduled = dedupDates
+      .map((el) =>
+        new Date(el)
+          .toLocaleString('en-AU', {
+            month: 'short',
+            day: 'numeric',
+          })
+          .replace(' ', '-')
+      )
+      .join(', ')
+    const dedupDays = Array.from(new Set(dedupDates.map((el) => new Date(el).getDay()))).sort()
+    course.daysScheduled = dedupDays
+      .map((el) => ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'][el])
+      .join(', ')
+    return course
+  })
+
+  const rows = sheetEvents.map((d) => flatten_(d))
   const heads = sheetDownload.getDataRange().offset(0, 0, 1).getValues()[0]
 
   // convert object data into a 2d array
@@ -130,69 +149,27 @@ const decodePresenter = (summary) => {
 function retrieveCalendarEvents(calendarId, eventRequest) {
   const unpackEvent = (type, event) => {
     const courseEvent = {
-      type: type,
-      id: event.id || '',
       summary: event.summary || '',
       description: event.description ? decodeDescription(event.description) : '',
       location: event.location || '',
-      startDateTime: new Date(event.start.dateTime).toLocaleString().replace(',', ''),
-      endDateTime: new Date(event.end.dateTime).toLocaleString().replace(',', ''),
-      recurrence: '',
-      recurText: '',
-      recurDates: '',
-      presenter: getNested(event, 'extendedProperties', 'private', 'presenter'),
-      contact: getNested(event, 'extendedProperties', 'private', 'contact'),
-      //      min: getNested(event, 'extendedProperties', 'private', 'min'),
-      //      max: getNested(event, 'extendedProperties', 'private', 'max'),
-      //      cost: getNested(event, 'extendedProperties', 'private', 'cost'),
-      //      isZoom: 'N',
-      //      zoomLink: '',
+      startDateTime: googleSheetDateTime(event.start.dateTime),
+      endDateTime: googleSheetDateTime(event.end.dateTime),
+      duration: '',
+      daysScheduled: '',
+      datesScheduled: '',
+      presenter: '',
+      contact: '',
+      type: type,
+      id: event.id || '',
+      eventStartDateTime: event.start.dateTime,
+      eventEndDateTime: event.end.dateTime,
     }
+    const duration = dateDiffMinutes(new Date(event.end.dateTime), new Date(event.start.dateTime))
+    courseEvent.duration = getTextTime(duration)
+    courseEvent.presenter = decodePresenter(courseEvent.summary)
+    courseEvent.contact = decodeContact(courseEvent.description)
 
-    // get Presenter and Contact from the text of the calendar
-    if (!courseEvent.presenter) {
-      courseEvent.presenter = decodePresenter(courseEvent.summary)
-    }
-
-    if (!courseEvent.contact) {
-      courseEvent.contact = decodeContact(courseEvent.description)
-    }
-
-    if (event.recurrence) {
-      courseEvent.recurrence = event.recurrence[0]
-      const dtStart = dateStringUTC(event.start.dateTime)
-      const tmp = rrule.RRule.fromString(`DTSTART:${dtStart}\n${event.recurrence[0]}`)
-      courseEvent.recurText = decodeRecurText(tmp)
-      courseEvent.recurDates = decodeRecurDates(tmp)
-    }
-    // Maybe used later if we schedule in Calendar
-    // const entryPoints = getNested(event, 'conferenceData', 'entryPoints')
-    // if (entryPoints && entryPoints[0].entryPointType === 'video') {
-    //   const el = entryPoints[0]
-    //   courseEvent.isVideo = true
-    //   courseEvent.meetingUri = el.uri
-    //   courseEvent.meetingLabel = el.label
-    //   courseEvent.meetingCode = el.meetingCode
-    //   courseEvent.meetingPassword = el.password
-    // }
     return courseEvent
-  }
-
-  const sortByTypeAndDate = (a, b) => {
-    //    (a.type > b.type) ? 1 : (a.type === b.type) ? (new Date(a.start.dateTime || a.start.date).getTime() -
-    //        new Date(b.start.dateTime || b.start.date).getTime()) : -1
-    if (a.type === b.type) {
-      return
-      new Date(a.start.dateTime || a.start.date).getTime() -
-        new Date(b.start.dateTime || b.start.date).getTime()
-    }
-    let comparison = 0
-    if (a.type > b.type) {
-      comparison = 1
-    } else if (a.type < b.type) {
-      comparison = -1
-    }
-    return comparison
   }
 
   const courseEvents = []
@@ -235,7 +212,7 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
     })
   })
   // console.log(courseEvents.length)
-  courseEvents.sort(sortByTypeAndDate)
+  courseEvents.sort((a, b) => new Date(a.eventStartDateTime) - new Date(b.eventStartDateTime))
   // courseEvents.forEach((e) => console.log(`${e.type} - ${e.id} - ${e.summary}`))
   //  console.log("\n\nException")
   //  exception.forEach(e => console.log(`${e.type} - ${e.id} - ${e.summary}`))
@@ -245,50 +222,6 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
   return courseEvents
 }
 
-/**
- * search for existence of nested object key and return value if found
- * @see https://stackoverflow.com/questions/2631001/test-for-existence-of-nested-javascript-object-key
- * @param {object} obj object to search
- * @returns {object} value of the property else null
- */
-function getNested(obj, ...args) {
-  return args.reduce((obj, level) => obj && obj[level], obj)
-}
-
-const monthNames = [
-  'Jan',
-  'Feb',
-  'Mar',
-  'Apr',
-  'May',
-  'Jun',
-  'Jul',
-  'Aug',
-  'Sep',
-  'Oct',
-  'Nov',
-  'Dec',
-]
-
-const splitDate = (t = new Date()) => t.toLocaleString().split(/[^\d]/)
-
-const fmtDate = (dtStr) => {
-  if (typeof dtStr === 'undefined' || dtStr === '') return 'unknown'
-  const [d, m, y] = splitDate(new Date(dtStr))
-  return d + '-' + monthNames[m - 1] + '-' + y
-}
-
-const decodeRecurText = (rule) => rule.toText()
-
-//get up to 10  dates for the recurring event
-const decodeRecurDates = (eventRule) => {
-  // console.log(`decodeDates: ${JSON.stringify(eventRule, null, 2)}`)
-  // just return dd-mmm (max 5)
-  const futureDates = eventRule
-    .all((date, i) => i < 10)
-    .map((dte) => fmtDate(new Date(dte)).slice(0, 6))
-  return `${futureDates.join(', ')}${futureDates.length > 9 ? '...' : ''}`
-}
 // Based on https://stackoverflow.com/a/54897035/1027723
 const flatten_ = (obj, prefix = '', res = {}) =>
   Object.entries(obj).reduce((r, [key, val]) => {
@@ -300,18 +233,3 @@ const flatten_ = (obj, prefix = '', res = {}) =>
     }
     return r
   }, res)
-
-const dateStringUTC = (dateTime) => {
-  const date = new Date(dateTime)
-  const mm = date.getUTCMonth() + 1
-  return [
-    date.getUTCFullYear().toString().padStart(4, '0'),
-    mm.toString().padStart(2, '0'),
-    date.getUTCDate().toString().padStart(2, '0'),
-    'T',
-    date.getUTCHours().toString().padStart(2, '0'),
-    date.getUTCMinutes().toString().padStart(2, '0'),
-    date.getUTCSeconds().toString().padStart(2, '0'),
-    'Z',
-  ].join('')
-}
