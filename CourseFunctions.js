@@ -315,6 +315,25 @@ function selectedRegistrationEmails() {
 }
 
 /**
+ * simple loop to call "print_courseRegister" for selected rows in the database
+ */
+function selectedHTMLRegistrationEmails() {
+  // Must select from the Database sheet and must be in column "E" (5)
+  const res = metaSelected('Database', 5)
+  if (!res) {
+    return
+  }
+  const { sheetSelected, rangeSelected } = res
+  let attendees = sheetSelected.getRange(rangeSelected).getDisplayValues()
+  attendees.forEach((attendee) => {
+    mergeDraftEmail('TEMPLATE - Course Registration Information', {
+      memberName: attendee[0],
+      subject: 'U3A Bermagui - Course Registration Information',
+    })
+  })
+}
+
+/**
  * Create an email to all attendees of a course and include Zoom session details
  * NOTE: This is used a few days prior to a session to send a link
  *       to all the enrolled partgicipants
