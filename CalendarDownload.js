@@ -100,17 +100,6 @@ function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmai
 }
 
 /**
- * remove any html tags and non-breaking-space from a string
- * @param {string} description the string to be manipulated
- * @returns {string} the munged result
- */
-const decodeDescription = (description) => {
-  return description
-    .replace(/(<([^>]+)>)/gi, '')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-}
-/**
  * find an embedded contact name in a string
  * @param {string} description the string to be searched
  * @returns {string} contact name, if found
@@ -150,7 +139,7 @@ function retrieveCalendarEvents(calendarId, eventRequest) {
   const unpackEvent = (type, event) => {
     const courseEvent = {
       summary: event.summary || '',
-      description: event.description ? decodeDescription(event.description) : '',
+      description: event.description ? stripHTML(event.description) : '',
       location: event.location || '',
       startDateTime: googleSheetDateTime(event.start.dateTime),
       endDateTime: googleSheetDateTime(event.end.dateTime),

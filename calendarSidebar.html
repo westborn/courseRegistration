@@ -81,7 +81,7 @@
       }
 
       function afterButtonClicked() {
-        console.log('afterButtonClicked')
+        // console.log('afterButtonClicked')
 
         const button = document.getElementById('mainButton')
         button.textContent = 'Loading Events'
@@ -95,12 +95,12 @@
       }
 
       function allDone() {
-        console.log('allDone')
+        // console.log('allDone')
 
         const button = document.getElementById('mainButton')
         button.textContent = 'Import Calendar Events'
         button.disabled = false
-        console.log('baaaack')
+        // console.log('baaaack')
       }
 
       function getRadioValue(name) {
@@ -111,7 +111,7 @@
       }
 
       function calendarReturned(res) {
-        console.log('calendarReturned')
+        // console.log('calendarReturned')
         const calendarNames = document.getElementById('calendarName')
         res.forEach((el) => {
           let option = document.createElement('option')

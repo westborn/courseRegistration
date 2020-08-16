@@ -1,4 +1,41 @@
 /**
+ * simple loop to call "mergeDraftEmail" for every row in the database
+ */
+function allHTMLRegistrationEmails() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const dbSheet = ss.getSheetByName('Database')
+  let attendees = dbSheet.getRange('E13:E').getDisplayValues()
+  const lastAttendeeIndex = attendees.filter(String).length
+  // drop the last item - it is the Grand Total
+  attendees.length = lastAttendeeIndex - 1
+  attendees.forEach((attendee) => {
+    mergeDraftEmail('TEMPLATE - Course Registration Information', {
+      memberName: attendee[0],
+      subject: 'U3A Bermagui - Course Registration Information',
+    })
+  })
+}
+
+/**
+ * simple loop to call "mergeDraftEmail" for selected rows in the database
+ */
+function selectedHTMLRegistrationEmails() {
+  // Must select from the Database sheet and must be in column "E" (5)
+  const res = metaSelected('Database', 5)
+  if (!res) {
+    return
+  }
+  const { sheetSelected, rangeSelected } = res
+  let attendees = sheetSelected.getRange(rangeSelected).getDisplayValues()
+  attendees.forEach((attendee) => {
+    mergeDraftEmail('TEMPLATE - Course Registration Information', {
+      memberName: attendee[0],
+      subject: 'U3A Bermagui - Course Registration Information',
+    })
+  })
+}
+
+/**
  * Get an existing draft temmplate and merge with a replacement object to produce a new draft email
  * @param {string} templateEmailSubject (optional) for the email draft template
  * @param {object} emailFields data fields for the new draft
@@ -186,11 +223,4 @@ function mergeDraftEmail(
       .replace(/[\r]/g, '\\r')
       .replace(/[\t]/g, '\\t')
   }
-}
-const stripHTML = (description) => {
-  return description
-    .replace(/(<([^>]+)>)/gi, '')
-    .replace(/&nbsp;/g, ' ')
-    .replace(/&quot;/g, '"')
-    .trim()
 }

@@ -250,3 +250,11 @@ function getTextTime(value) {
   var min = minutes === 0 ? '' : minutes === 1 ? minutes + 'min' : minutes + 'mins'
   return `${hour} ${min}`.trim()
 }
+
+const stripHTML = (text) => {
+  return text
+    .replace(/(<([^>]+)>)/gi, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&quot;/g, '"')
+    .trim()
+}
