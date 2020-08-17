@@ -100,7 +100,7 @@ function print_attendance() {
   var rangeNameToPrint = 'print_area_attendance'
 
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var myNamedRanges = getNamedRangesA1(spreadsheet)
+  var myNamedRanges = listNamedRangesA1(spreadsheet)
   if (myNamedRanges[rangeNameToPrint] === 'undefined') {
     showToast(
       "No print area found. Please define one 'print_area_????' named range using Data > Named ranges.",
@@ -139,7 +139,7 @@ function print_courseRegister() {
   var rangeNameToPrint = 'print_area_courseRegister'
 
   var spreadsheet = SpreadsheetApp.getActiveSpreadsheet()
-  var myNamedRanges = getNamedRangesA1(spreadsheet)
+  var myNamedRanges = listNamedRangesA1(spreadsheet)
   if (myNamedRanges[rangeNameToPrint] === 'undefined') {
     showToast(
       "No print area found. Please define one 'print_area_????' named range using Data > Named ranges.",
@@ -166,39 +166,6 @@ function print_courseRegister() {
   })
 
   return
-}
-
-/**
- * Create a draft email about a Zoom session from the "Attendance" sheet
- * "D8" for the course
- * "D9" for the time
- * "O3" for the recipient (presenter)
- * "E14:E60" for the bcc recipients
- *
- */
-function createDraftZoomEmail1() {
-  const ss = SpreadsheetApp.getActiveSpreadsheet()
-  const sheet = ss.getSheetByName('Attendance')
-
-  var htmlBody = HtmlService.createTemplateFromFile('zoomReminder')
-  htmlBody.course = sheet.getRange('D8').getDisplayValue()
-  htmlBody.datetime = sheet.getRange('D9').getDisplayValue()
-  var email_html = htmlBody.evaluate().getContent()
-
-  var recipient = sheet.getRange('O3').getDisplayValue()
-  var subject = 'U3A: ' + htmlBody.course + ' - ' + htmlBody.datetime
-  var body = subject
-
-  var userEmails = sheet.getRange('E14:E60').getValues()
-  //flatten array and remove dups and drop empty strings
-  var bccEmails = [...new Set(userEmails.flat())].filter(String).join(',')
-
-  resp = GmailApp.createDraft(recipient, subject, body, {
-    htmlBody: email_html,
-    bcc: bccEmails,
-    name: 'Bermagui U3A',
-  })
-  //  Logger.log(resp);
 }
 
 /**
@@ -313,40 +280,51 @@ function selectedRegistrationEmails() {
     print_courseRegister()
   })
 }
+
 /**
  * Create an email to all attendees of a course and include Zoom session details
+ * NOTE: Uses an existing DRAFT email as a template
  * NOTE: This is used a few days prior to a session to send a link
- *       to all the enrolled partgicipants
+ *       to all the enrolled participants
  *
- * @param {object} session
- * @param {string} session.courseSummary of an existing course
- * @param {string} session.startDateTime of the session
- * @param {string} session.duration of the session
+ * @param {string} templateEmailSubject of an existing DRAFT to use as a template
  *
  */
-function createZoomSessionEmail() {
-  const firstColSelected = SpreadsheetApp.getActive().getActiveRange().getColumn()
-  const lastColSelected = SpreadsheetApp.getActive().getActiveRange().getLastColumn()
-
-  if (SpreadsheetApp.getActive().getActiveSheet().getName() != 'Calendar Download') {
-    showToast('You need to select a title on the "Calendar Download" sheet', 20)
-    return null
+function createZoomSessionEmail(templateEmailSubject = 'TEMPLATE - Zoom Session Advice') {
+  // Must select from the CalendarImport sheet and must be in column "A" (1)
+  const res = metaSelected('CalendarImport', 1)
+  if (!res) {
+    return
   }
-  if (firstColSelected != lastColSelected || firstColSelected != 1) {
-    showToast('You need to select ONE title only', 20)
-    return null
+  const { rowSelected, numRowsSelected } = res
+
+  // option to skip browser prompt if you want to use this code in other projects
+  if (!templateEmailSubject) {
+    templateEmailSubject = Browser.inputBox(
+      'Mail Merge',
+      'Type or copy/paste the subject line of the Gmail ' +
+        'draft message you would like to mail merge with:',
+      Browser.Buttons.OK_CANCEL
+    )
+
+    if (templateEmailSubject === 'cancel' || templateEmailSubject == '') {
+      // if no subject line finish up
+      return
+    }
   }
 
-  const rowSelected = SpreadsheetApp.getActive().getActiveRange().getRow()
+  //get CalendarImport sheet
   const sessionData = SpreadsheetApp.getActiveSpreadsheet()
-    .getSheetByName('Calendar Download')
+    .getSheetByName('CalendarImport')
     .getDataRange()
     .getValues()
   const allSessions = getJsonArrayFromData(sessionData)
 
-  // selected row as an index minus the header row hence (-2)
-  const thisSession = allSessions[rowSelected - 2]
-  selectedSummary = thisSession.summary
+  //filter to just tne session selected. Note header and zero baseed index means offset -2
+  selectedSessions = allSessions.filter(
+    (session_, idx) => idx >= rowSelected - 2 && idx < rowSelected + numRowsSelected - 2
+  )
+  selectedSessions.map((el) => console.log(el.summary, el.id))
 
   //get courseDetail sheet
   const courseData = SpreadsheetApp.getActiveSpreadsheet()
@@ -354,57 +332,68 @@ function createZoomSessionEmail() {
     .getDataRange()
     .getValues()
   const allCourses = getJsonArrayFromData(courseData)
-
   //get memberDetail sheet
   const memberData = SpreadsheetApp.getActiveSpreadsheet()
     .getSheetByName('MemberDetails')
     .getDataRange()
     .getValues()
   const allMembers = getJsonArrayFromData(memberData)
-
   //get the Database of who is attending which course (columns B:C)
   const db = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('Database')
   const dbData = db.getRange('B12:C' + db.getLastRow()).getValues()
   const allDB = getJsonArrayFromData(dbData)
 
-  const htmlBody = HtmlService.createTemplateFromFile('zoomReminder')
-  htmlBody.course = thisSession.summary
-  htmlBody.datetime = formatU3ADateTime(new Date(thisSession.startDateTime))
-  const email_html = htmlBody.evaluate().getContent()
+  selectedSessions.forEach((thisSession) => {
+    const courseDateTime = formatU3ADateTime(new Date(thisSession.startDateTime))
 
-  const thisCourse = allCourses.find(
-    (course) => course.summary.toString().toLowerCase() === selectedSummary.toString().toLowerCase()
-  )
-  const recipient = thisCourse.email
-  const subject = 'U3A: ' + htmlBody.course + ' - ' + htmlBody.datetime
-  const body = subject
-
-  const membersGoing = allDB
-    .filter(
-      (dbEntry) =>
-        dbEntry.goingTo.toString().toLowerCase() === thisCourse.title.toString().toLowerCase()
+    const thisCourse = allCourses.find(
+      (course) =>
+        course.summary.toString().toLowerCase() === thisSession.summary.toString().toLowerCase()
     )
-    .map((entry) => entry.memberName)
-  const memberEmails = membersGoing.map(
-    (name) =>
-      allMembers.find(
-        (member) => name.toString().toLowerCase() === member.memberName.toString().toLowerCase()
-      ).email
-  )
-  //flatten array and remove dups and drop empty strings
-  const bccEmails = [...new Set(memberEmails.flat())].filter(String).join(',')
+    const recipient = thisCourse.email
+    const subject = 'U3A: ' + thisSession.summary + '  -  ' + courseDateTime
 
-  resp = GmailApp.createDraft(recipient, subject, body, {
-    htmlBody: email_html,
-    bcc: bccEmails,
-    name: 'Bermagui U3A',
+    const membersGoing = allDB
+      .filter(
+        (dbEntry) =>
+          dbEntry.goingTo.toString().toLowerCase() === thisCourse.title.toString().toLowerCase()
+      )
+      .map((entry) => entry.memberName)
+    const memberEmails = membersGoing.map(
+      (name) =>
+        allMembers.find(
+          (member) => name.toString().toLowerCase() === member.memberName.toString().toLowerCase()
+        ).email
+    )
+    //flatten array and remove dups and drop empty strings
+    const bccEmails = [...new Set(memberEmails.flat())].filter(String).join(',')
+
+    const fieldReplacer = {
+      courseSummary: thisSession.summary,
+      startDateTime: courseDateTime,
+    }
+
+    // get the draft Gmail message to use as a template
+    const emailTemplate = getGmailTemplateFromDrafts_(templateEmailSubject)
+
+    try {
+      const msgObj = fillinTemplateFromObject(emailTemplate.message, fieldReplacer)
+      const msgText = stripHTML(msgObj.text)
+      GmailApp.createDraft(recipient, subject, msgText, {
+        htmlBody: msgObj.html,
+        bcc: bccEmails,
+        name: 'Bermagui U3A',
+        attachments: emailTemplate.attachments,
+      })
+    } catch (e) {
+      throw new Error("Oops - can't create new Gmail draft")
+    }
   })
-  //  Logger.log(resp);
 }
 
 /**
  * Formats a date to a "standard" for U3A correspondence
- * "ddd d-mmm-yyyy h:mm AM"
+ * "ddd d-mmm h:mm AM"
  * @param {date} dte
  * @returns {string} formatted date string
  */
@@ -439,5 +428,5 @@ function formatU3ADateTime(dte) {
     { value: dayperiod },
   ] = dateTimeFormat.formatToParts(new Date(dte))
 
-  return `${weekday} ${day}-${month}-${year} ${hour}:${minute}${dayperiod}`
+  return `${weekday} ${day}-${month} ${hour}:${minute}${dayperiod}`
 }

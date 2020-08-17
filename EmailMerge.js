@@ -39,14 +39,11 @@ function selectedHTMLRegistrationEmails() {
  * Get an existing draft temmplate and merge with a replacement object to produce a new draft email
  * @param {string} templateEmailSubject (optional) for the email draft template
  * @param {object} emailFields data fields for the new draft
- * @param {object} emailFields.memberName:
- * @param {object} emailFields.subject:
- * @param {object} emailFields.bcc:
- * @param {object} emailFields.cc:
+ * @param {object} emailFields.memberName
+ * @param {object} emailFields.subject
+ * @param {object} emailFields.bcc
+ * @param {object} emailFields.cc
  *
- * memberName:
- * firstName:
- * classDetails:
  */
 function mergeDraftEmail(
   templateEmailSubject = 'TEMPLATE - Course Registration Information',
@@ -132,7 +129,7 @@ function mergeDraftEmail(
   const emailTemplate = getGmailTemplateFromDrafts_(templateEmailSubject)
 
   try {
-    const msgObj = fillInTemplateFromObject_(emailTemplate.message, fieldReplacer)
+    const msgObj = fillinTemplateFromObject(emailTemplate.message, fieldReplacer)
     const msgText = stripHTML(msgObj.text)
     GmailApp.createDraft(thisMember.email, emailFields.subject, msgText, {
       htmlBody: msgObj.html,
@@ -145,82 +142,5 @@ function mergeDraftEmail(
     })
   } catch (e) {
     throw new Error("Oops - can't create new Gmail draft")
-  }
-
-  // // updating the sheet with new data
-  // sheet.getRange(2, emailSentColIdx + 1, out.length).setValues(out)
-
-  /**
-   * Get a Gmail draft message by matching the subject line.
-   * @param {string} subject_line to search for draft message
-   * @return {object} containing the subject, plain and html message body and attachments
-   */
-  function getGmailTemplateFromDrafts_(subject_line) {
-    try {
-      // get drafts
-      const drafts = GmailApp.getDrafts()
-      // filter the drafts that match subject line
-      const draft = drafts.filter(subjectFilter_(subject_line))[0]
-      // get the message object
-      const msg = draft.getMessage()
-      // getting attachments so they can be included in the merge
-      const attachments = msg.getAttachments()
-      return {
-        message: { subject: subject_line, text: msg.getPlainBody(), html: msg.getBody() },
-        attachments: attachments,
-      }
-    } catch (e) {
-      throw new Error("Oops - can't find Gmail draft")
-    }
-
-    /**
-     * Filter draft objects with the matching subject linemessage by matching the subject line.
-     * @param {string} subject_line to search for draft message
-     * @return {object} GmailDraft object
-     */
-    function subjectFilter_(subject_line) {
-      return function (element) {
-        if (element.getMessage().getSubject() === subject_line) {
-          return element
-        }
-      }
-    }
-  }
-
-  /**
-   * Fill template string with data object
-   * @see https://stackoverflow.com/a/378000/1027723
-   * @param {string} template string containing {{}} markers which are replaced with data
-   * @param {object} data object used to replace {{}} markers
-   * @return {object} message replaced with data
-   */
-  function fillInTemplateFromObject_(template, data) {
-    // we have two templates one for plain text and the html body
-    // stringifing the object means we can do a global replace
-    let template_string = JSON.stringify(template)
-
-    // token replacement
-    template_string = template_string.replace(/{{[^{}]+}}/g, (key) => {
-      return escapeData_(data[key.replace(/[{}]+/g, '')] || '')
-    })
-    return JSON.parse(template_string)
-  }
-
-  /**
-   * Escape cell data to make JSON safe
-   * @see https://stackoverflow.com/a/9204218/1027723
-   * @param {string} str to escape JSON special characters from
-   * @return {string} escaped string
-   */
-  function escapeData_(str) {
-    return str
-      .replace(/[\\]/g, '\\\\')
-      .replace(/[\"]/g, '\\"')
-      .replace(/[\/]/g, '\\/')
-      .replace(/[\b]/g, '\\b')
-      .replace(/[\f]/g, '\\f')
-      .replace(/[\n]/g, '\\n')
-      .replace(/[\r]/g, '\\r')
-      .replace(/[\t]/g, '\\t')
   }
 }

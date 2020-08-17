@@ -26,14 +26,14 @@ function getCalendarList() {
 }
 
 /**
- * get all the events for the term from a calendar and write them to the "Calendar Download" sheet
+ * get all the events for the term from a calendar and write them to the "CalendarImport" sheet
  * @param {number} term number (1 - 4)
  * @param {id} calendarId of the calendar to retrieve events from
  */
 function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmail.com' } = {}) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheetOptions = ss.getSheetByName('Options')
-  const sheetDownload = ss.getSheetByName('Calendar Download')
+  const sheetDownload = ss.getSheetByName('CalendarImport')
 
   // setup dates from the term selected (start and end dates)
   const terms = sheetOptions.getRange(1, 1, 5, 3).getValues()

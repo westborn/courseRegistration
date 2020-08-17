@@ -28,7 +28,7 @@ const getZoomUserId = () => {
 }
 
 function selectedZoomSessions() {
-  const res = metaSelected('Calendar Download', 1)
+  const res = metaSelected('CalendarImport', 1)
   if (!res) {
     return
   }

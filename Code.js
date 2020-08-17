@@ -15,7 +15,7 @@ function onOpen() {
   ui.createMenu('U3A Menu')
     .addSubMenu(
       ui
-        .createMenu('Calendar Download')
+        .createMenu('CalendarImport')
         .addItem('Schedule Zoom Meeting', 'selectedZoomSessions')
         .addItem('Email Zoom Session Advice', 'createZoomSessionEmail')
         .addItem('Import Calendar', 'loadCalendarSidebar')

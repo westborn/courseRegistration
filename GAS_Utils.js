@@ -16,8 +16,13 @@ function showToast(msg, duration) {
   SpreadsheetApp.getActive().toast(msg, 'U3A Courses', duration)
 }
 
-// return an object with rangeNames and full A1 notation addresses ("named Range": 'Sheet'!A1:B2)
-function getNamedRangesA1(ss) {
+/**
+ * List all Named Ranges in a spreadsheet
+ * @param {object} ss spreadsheet object with Named Ranges
+ * @returns {object} an array of objects with all rangeNames in A1 notation addresses ("named Range": 'Sheet'!A1:B2)
+ *
+ */
+function listNamedRangesA1(ss) {
   let sheetIdToName = {}
   ss.getSheets().forEach(function (e) {
     sheetIdToName[e.getSheetId()] = e.getSheetName()
@@ -40,13 +45,13 @@ function getNamedRangesA1(ss) {
   })
   return result
 }
-
-// Takes in
-//   spreadsheet:(Range Object)
-//   fileName:(String)
-// returns
-//   pdfFile:(File Object)
-//
+/**
+ * @param {object} selectedRange range to be converted to a PDF
+ * @param {string} fileName for the PDF
+ * @param {string} folderName for the PDF
+ * @returns {object} file object of the PDF file created
+ *
+ */
 function makePDFfromRange(selectedRange, fileName, folderName) {
   const sheetToExport = selectedRange.getSheet()
   const ss = sheetToExport.getParent()
@@ -108,8 +113,8 @@ function makePDFfromRange(selectedRange, fileName, folderName) {
  * Create an object from a 2 dimensional array (usually sheet data)
  * from https://stackoverflow.com/questions/47555347/creating-a-json-object-from-google-sheets
  *
- * @param {array} data 2 dimensional array of rows with headings in first row
- * @returns {array} of objects with keys from row 1 with values from each other row
+ * @param {Array} data 2 dimensional array of rows with headings in first row
+ * @return {Array.<{}>} array of objects with keys from row 1 with values from each other row
  *
  */
 function getJsonArrayFromData(data) {
@@ -174,14 +179,14 @@ function expBackOff(func, optLoggerFunction) {
  *
  * @param {String} inSheet default 'Sheet1' - the sheet that must be active
  * @param {number} oneColOnly default 0 - number of the column if selection should only be in one column - else 0
- * @returns {object} data elements from the selecetd range
- * @returns {Sheet object} sheetSelected
- * @returns {string} colSelected
- * @returns {string} rowSelected
- * @returns {string} rangeSelected in A1 notation
- * @returns {string} numRowsSelected
- * @returns {string} numColsSelected
- * @returns {string} activeCellValue - string, number, date etc
+ * @returns {object} data various elements from the selected range
+ * @returns {object} data.sheetSelected - {Sheet object} of the selected sheet
+ * @returns {string} data.colSelected
+ * @returns {string} data.rowSelected
+ * @returns {string} data.rangeSelected in A1 notation
+ * @returns {string} data.numRowsSelected
+ * @returns {string} data.numColsSelected
+ * @returns {string} data.activeCellValue - string, number, date etc
  *
  */
 function metaSelected(inSheet = 'Sheet1', oneColOnly = 0) {
@@ -236,6 +241,12 @@ function googleSheetDateTime(dte) {
     .replace(',', '')
 }
 
+/**
+ * format time to readable form eg 1 hr or 2hrs 45mins
+ *
+ * @param {Date Object} dte
+ * @returns {string} formatted time
+ */
 function getTextTime(value) {
   if (value === null) {
     return ''
@@ -251,10 +262,90 @@ function getTextTime(value) {
   return `${hour} ${min}`.trim()
 }
 
+/**
+ * strip all? HTML decorations from a string
+ *
+ * @param {string} text
+ * @returns {string} text with HTML removed
+ */
 const stripHTML = (text) => {
   return text
     .replace(/(<([^>]+)>)/gi, '')
     .replace(/&nbsp;/g, ' ')
     .replace(/&quot;/g, '"')
     .trim()
+}
+
+/**
+ * Get a Gmail draft message by matching the subject line.
+ * @param {string} subject_line to search for draft message
+ * @return {object} containing the subject, plain and html message body and attachments
+ */
+function getGmailTemplateFromDrafts_(subject_line) {
+  try {
+    // get drafts
+    const drafts = GmailApp.getDrafts()
+    // filter the drafts that match subject line
+    const draft = drafts.filter(subjectFilter_(subject_line))[0]
+    // get the message object
+    const msg = draft.getMessage()
+    // getting attachments so they can be included in the merge
+    const attachments = msg.getAttachments()
+    return {
+      message: { subject: subject_line, text: msg.getPlainBody(), html: msg.getBody() },
+      attachments: attachments,
+    }
+  } catch (e) {
+    throw new Error("Oops - can't find Gmail draft")
+  }
+
+  /**
+   * Filter draft objects with the matching subject linemessage by matching the subject line.
+   * @param {string} subject_line to search for draft message
+   * @return {object} GmailDraft object
+   */
+  function subjectFilter_(subject_line) {
+    return function (element) {
+      if (element.getMessage().getSubject() === subject_line) {
+        return element
+      }
+    }
+  }
+}
+
+/**
+ * Fill template string with data object
+ * @see https://stackoverflow.com/a/378000/1027723
+ * @param {string} template string containing {{}} markers which are replaced with data
+ * @param {object} data object used to replace {{}} markers
+ * @return {object} message replaced with data
+ */
+function fillinTemplateFromObject(template, data) {
+  // we have two templates one for plain text and the html body
+  // stringifing the object means we can do a global replace
+  let template_string = JSON.stringify(template)
+
+  // token replacement
+  template_string = template_string.replace(/{{[^{}]+}}/g, (key) => {
+    return escapeData(data[key.replace(/[{}]+/g, '')] || '')
+  })
+  return JSON.parse(template_string)
+}
+
+/**
+ * Escape cell data to make JSON safe
+ * @see https://stackoverflow.com/a/9204218/1027723
+ * @param {string} str to escape JSON special characters from
+ * @return {string} escaped string
+ */
+function escapeData(str) {
+  return str
+    .replace(/[\\]/g, '\\\\')
+    .replace(/[\"]/g, '\\"')
+    .replace(/[\/]/g, '\\/')
+    .replace(/[\b]/g, '\\b')
+    .replace(/[\f]/g, '\\f')
+    .replace(/[\n]/g, '\\n')
+    .replace(/[\r]/g, '\\r')
+    .replace(/[\t]/g, '\\t')
 }
