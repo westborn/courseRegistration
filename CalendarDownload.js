@@ -33,7 +33,7 @@ function getCalendarList() {
 function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmail.com' } = {}) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheetOptions = ss.getSheetByName('Options')
-  const sheetDownload = ss.getSheetByName('CalendarImport')
+  const calendarImportSheet = ss.getSheetByName('CalendarImport')
 
   // setup dates from the term selected (start and end dates)
   const terms = sheetOptions.getRange(1, 1, 5, 3).getValues()
@@ -47,14 +47,14 @@ function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmai
   const courseEvents = retrieveCalendarEvents(calendarId, eventRequest)
 
   //clear the sheet we are going to download the events to
-  sheetDownload.insertRowBefore(2)
-  const lastRow = sheetDownload.getLastRow()
+  calendarImportSheet.insertRowBefore(2)
+  const lastRow = calendarImportSheet.getLastRow()
   if (lastRow > 2) {
-    sheetDownload.deleteRows(3, lastRow - 2)
+    calendarImportSheet.deleteRows(3, lastRow - 2)
   }
 
   if (!courseEvents.length) {
-    sheetDownload.getRange(2, 1).setValue('No events Found')
+    calendarImportSheet.getRange(2, 1).setValue('No events Found')
     return
   }
 
@@ -88,13 +88,15 @@ function downloadCalendarEvents({ term = 3, calendarId = 'u3acomputerclub@hotmai
   })
 
   const rows = sheetEvents.map((d) => flatten_(d))
-  const heads = sheetDownload.getDataRange().offset(0, 0, 1).getValues()[0]
+  const heads = calendarImportSheet.getDataRange().offset(0, 0, 1).getValues()[0]
 
   // convert object data into a 2d array
   const tr = rows.map((row) => heads.map((key) => row[String(key)] || ''))
 
   // write result
-  sheetDownload.getRange(sheetDownload.getLastRow() + 1, 1, tr.length, tr[0].length).setValues(tr)
+  calendarImportSheet
+    .getRange(calendarImportSheet.getLastRow() + 1, 1, tr.length, tr[0].length)
+    .setValues(tr)
 
   return
 }
@@ -108,7 +110,7 @@ const decodeContact = (description) => {
   const searchForContact = description.indexOf('Contact:')
   if (searchForContact > 0) {
     return description
-      .slice(searchForContact + 9)
+      .slice(searchForContact + 8)
       .trim()
       .replace('.', '')
   } else {

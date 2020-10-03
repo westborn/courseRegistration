@@ -175,11 +175,12 @@ function print_courseRegister() {
  *
  */
 function makeCourseDetailForWordPress() {
-  var rng = SpreadsheetApp.getActiveSpreadsheet()
+  //get courseDetail sheet
+  const courseData = SpreadsheetApp.getActiveSpreadsheet()
     .getSheetByName('CourseDetails')
     .getDataRange()
-    .getDisplayValues()
-  numCourses = rng.length - 1
+    .getValues()
+  const allCourses = getJsonArrayFromData(courseData)
 
   var ssDest = SpreadsheetApp.openById(U3A.WORDPRESS_PROGRAM_FILE_ID)
 
@@ -188,13 +189,13 @@ function makeCourseDetailForWordPress() {
   if (maxRows > 1) {
     sheet.deleteRows(2, maxRows - 1)
   }
-  sheet.insertRowsAfter(1, numCourses - 1)
+  sheet.insertRowsAfter(1, allCourses.length - 1)
 
-  for (var i = 1; i <= numCourses; i++) {
+  allCourses.forEach((course, index) => {
     //Loop through each row
-    var outputStart = sheet.getRange(i, 1)
-    courseDetailToSheet(rng[i], outputStart)
-  }
+    var outputStart = sheet.getRange(index + 1, 1)
+    courseDetailToSheet(course, outputStart)
+  })
 }
 
 /**
@@ -203,7 +204,7 @@ function makeCourseDetailForWordPress() {
  * @param {range} outputTo range to write to on the sheet
  *
  * currently uses ordinal positions of the columns
- * TODO - use column headings OR pass in an object
+ * TODO - make "latest close date"
  */
 function courseDetailToSheet(course, outputTo) {
   var bold = SpreadsheetApp.newTextStyle().setBold(true).build()
@@ -215,8 +216,8 @@ function courseDetailToSheet(course, outputTo) {
   let rich
   let cell
 
-  cell = course[0] + '\n' + course[8]
-  var headLen = course[0].length
+  cell = course.summary + '\n' + course.description
+  var headLen = course.summary.length
   rich = SpreadsheetApp.newRichTextValue()
   rich
     .setText(cell)
@@ -228,7 +229,7 @@ function courseDetailToSheet(course, outputTo) {
     .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
     .setVerticalAlignment('middle')
 
-  cell = course[5] + '\n' + course[6] + '\n' + course[7] + '\n' + course[12]
+  cell = course.dates + '\n' + course.time + '\n' + course.location + '\n' + course.phone
   rich = SpreadsheetApp.newRichTextValue()
   rich.setText(cell).setTextStyle(defaultFontSize)
   outputTo
@@ -237,8 +238,17 @@ function courseDetailToSheet(course, outputTo) {
     .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
     .setVerticalAlignment('middle')
 
+  cell = 'Ending Date goes here'
+  rich = SpreadsheetApp.newRichTextValue()
+  rich.setText(cell).setTextStyle(defaultFontSize)
   outputTo
-    .offset(0, 0, 1, 2)
+    .offset(0, 2)
+    .setRichTextValue(rich.build())
+    .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
+    .setVerticalAlignment('middle')
+
+  outputTo
+    .offset(0, 0, 1, 3)
     .setBorder(true, null, null, null, null, null, 'black', SpreadsheetApp.BorderStyle.SOLID)
 }
 
@@ -429,4 +439,87 @@ function formatU3ADateTime(dte) {
   ] = dateTimeFormat.formatToParts(new Date(dte))
 
   return `${weekday} ${day}-${month} ${hour}:${minute}${dayperiod}`
+}
+
+/**
+ * Reformats CalendarImport and creates the CourseDetails sheet - 1 row per course.
+ *
+ */
+function createCourseDetails() {
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+
+  const courseDetailsSheet = ss.getSheetByName('newDetails')
+  //clear the sheet we are going to create
+  courseDetailsSheet.insertRowBefore(2)
+  const lastRow = courseDetailsSheet.getLastRow()
+  if (lastRow > 2) {
+    courseDetailsSheet.deleteRows(3, lastRow - 2)
+  }
+
+  //get CalendarImport sheet and sort it by summary and startDate
+  const sessionData = ss.getSheetByName('CalendarImport').getDataRange().getValues()
+  const allSessions = getJsonArrayFromData(sessionData)
+  const sortedSessions = allSessions.sort((a, b) => {
+    if (a.summary !== b.summary) {
+      return a.summary < b.summary ? -1 : 1
+    }
+    const datediff = new Date(a.startDateTime) - new Date(b.startDateTime)
+    if (datediff != 0) {
+      return datediff
+    }
+    return 0
+  })
+
+  //get unique session summary and index to the session with the earliest date for that summary
+  const courses = sortedSessions.reduce((acc, { summary, startDateTime }, index, src) => {
+    if (!acc.hasOwnProperty(summary)) {
+      acc[summary] = index
+      return acc
+    }
+    if (src[acc[summary]].startDateTime > startDateTime) {
+      acc[summary] = index
+      return acc
+    }
+    return acc
+  }, {})
+
+  console.log(courses)
+  const rows = Object.values(courses).map((index) => {
+    const xyzzy = '???'
+    const searchForTitle = sortedSessions[index].summary.match(/with(?!.*with)/i)
+    let title = ''
+    if (searchForTitle && searchForTitle.index) {
+      title = sortedSessions[index].summary.slice(0, searchForTitle.index).trim()
+    }
+
+    return {
+      summary: sortedSessions[index].summary,
+      title,
+      startDate: googleSheetDateTime(sortedSessions[index].startDateTime),
+      presenter: sortedSessions[index].presenter,
+      days: sortedSessions[index].daysScheduled,
+      dates: sortedSessions[index].datesScheduled,
+      time: xyzzy,
+      location: sortedSessions[index].location,
+      description: sortedSessions[index].description,
+      min: xyzzy,
+      max: xyzzy,
+      cost: xyzzy,
+      phone: xyzzy,
+      email: xyzzy,
+      contact: sortedSessions[index].contact,
+    }
+  })
+
+  const heads = courseDetailsSheet.getDataRange().offset(0, 0, 1).getValues()[0]
+
+  // convert object data into a 2d array
+  const tr = rows.map((row) => heads.map((key) => row[String(key)] || ''))
+
+  // write result
+  courseDetailsSheet
+    .getRange(courseDetailsSheet.getLastRow() + 1, 1, tr.length, tr[0].length)
+    .setValues(tr)
+
+  return
 }

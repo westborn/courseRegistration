@@ -19,6 +19,7 @@ function onOpen() {
         .addItem('Schedule Zoom Meeting', 'selectedZoomSessions')
         .addItem('Email Zoom Session Advice', 'createZoomSessionEmail')
         .addItem('Import Calendar', 'loadCalendarSidebar')
+        .addItem('Create CourseDetails', 'createCourseDetails')
     )
     .addSeparator()
     .addSubMenu(
@@ -34,7 +35,7 @@ function onOpen() {
     .addSubMenu(
       ui
         .createMenu('Wordpress Actions')
-        .addItem('Update Course Program', 'makeCourseDetailForWordPress')
+        .addItem('Create Course Program', 'makeCourseDetailForWordPress')
         .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
     )
     .addSeparator()
