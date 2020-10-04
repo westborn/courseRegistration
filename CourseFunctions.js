@@ -238,9 +238,17 @@ function courseDetailToSheet(course, outputTo) {
     .setWrapStrategy(SpreadsheetApp.WrapStrategy.WRAP)
     .setVerticalAlignment('middle')
 
-  cell = 'Ending Date goes here'
+  // Calculate friday prior to course start date.
+
+  cell =
+    'Enrollments close - ' +
+    fmtDateTimeLocal(getLastFridayOf(course.startDate), {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    })
   rich = SpreadsheetApp.newRichTextValue()
-  rich.setText(cell).setTextStyle(defaultFontSize)
+  rich.setText(cell).setTextStyle(bodyFontSize).setLinkUrl('https://bermagui.u3anet.org.au/enrol')
   outputTo
     .offset(0, 2)
     .setRichTextValue(rich.build())
@@ -334,7 +342,7 @@ function createZoomSessionEmail(templateEmailSubject = 'TEMPLATE - Zoom Session 
   selectedSessions = allSessions.filter(
     (session_, idx) => idx >= rowSelected - 2 && idx < rowSelected + numRowsSelected - 2
   )
-  selectedSessions.map((el) => console.log(el.summary, el.id))
+  // selectedSessions.map((el) => console.log(el.summary, el.id))
 
   //get courseDetail sheet
   const courseData = SpreadsheetApp.getActiveSpreadsheet()
@@ -448,13 +456,20 @@ function formatU3ADateTime(dte) {
 function createCourseDetails() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
 
-  const courseDetailsSheet = ss.getSheetByName('newDetails')
+  const courseDetailsSheet = ss.getSheetByName('CourseDetails')
   //clear the sheet we are going to create
   courseDetailsSheet.insertRowBefore(2)
   const lastRow = courseDetailsSheet.getLastRow()
   if (lastRow > 2) {
     courseDetailsSheet.deleteRows(3, lastRow - 2)
   }
+
+  //get memberDetail sheet
+  const memberData = SpreadsheetApp.getActiveSpreadsheet()
+    .getSheetByName('MemberDetails')
+    .getDataRange()
+    .getValues()
+  const allMembers = getJsonArrayFromData(memberData)
 
   //get CalendarImport sheet and sort it by summary and startDate
   const sessionData = ss.getSheetByName('CalendarImport').getDataRange().getValues()
@@ -483,14 +498,39 @@ function createCourseDetails() {
     return acc
   }, {})
 
-  console.log(courses)
+  // SEarch for a string and return  the next word
+  let getWordAfter = (str, searchText) => {
+    const re = new RegExp(`${searchText}\\s(\\S+)`, 'i')
+    const found = str.match(re)
+    return found && found.index ? found[1] : ''
+  }
+
   const rows = Object.values(courses).map((index) => {
-    const xyzzy = '???'
+    // Title
     const searchForTitle = sortedSessions[index].summary.match(/with(?!.*with)/i)
     let title = ''
     if (searchForTitle && searchForTitle.index) {
       title = sortedSessions[index].summary.slice(0, searchForTitle.index).trim()
     }
+    // Times
+    const displayStartTime = fmtDateTimeLocal(new Date(sortedSessions[index].startDateTime), {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+    const displayEndTime = fmtDateTimeLocal(new Date(sortedSessions[index].endDateTime), {
+      hour: 'numeric',
+      minute: '2-digit',
+      hour12: true,
+    })
+    const time = `${displayStartTime} - ${displayEndTime}`.replace(/:00 /g, '')
+
+    const member =
+      allMembers.find(
+        (member) =>
+          sortedSessions[index].contact.toString().toLowerCase() ===
+          member.memberName.toString().toLowerCase()
+      ) || {}
 
     return {
       summary: sortedSessions[index].summary,
@@ -499,15 +539,15 @@ function createCourseDetails() {
       presenter: sortedSessions[index].presenter,
       days: sortedSessions[index].daysScheduled,
       dates: sortedSessions[index].datesScheduled,
-      time: xyzzy,
-      location: sortedSessions[index].location,
+      time,
+      location: sortedSessions[index].location || 'Zoom online',
       description: sortedSessions[index].description,
-      min: xyzzy,
-      max: xyzzy,
-      cost: xyzzy,
-      phone: xyzzy,
-      email: xyzzy,
-      contact: sortedSessions[index].contact,
+      min: getWordAfter(sortedSessions[index].description, 'Min:'),
+      max: getWordAfter(sortedSessions[index].description, 'Max:'),
+      cost: getWordAfter(sortedSessions[index].description, 'Cost:'),
+      phone: member.mobile || '',
+      email: member.email || '',
+      contact: sortedSessions[index].contact || 'No Contact',
     }
   })
 

@@ -262,6 +262,44 @@ function getTextTime(value) {
   return `${hour} ${min}`.trim()
 }
 
+// weekday: 'short',
+// month: 'short',
+// day: 'numeric',
+// year: 'numeric',
+// hour: 'numeric',
+// minute: '2-digit',
+// second: '2-digit',
+// hour12: true,
+function fmtDateTimeLocal(
+  dte = new Date(),
+  options = {
+    month: 'short',
+    day: 'numeric',
+  }
+) {
+  return new Date(dte).toLocaleString('en-AU', options)
+}
+
+/**
+ * find the date for the friday prior to date passed in
+ * return ddd, dd-mmm-yyyy
+ *
+ * @param {Date Object} date
+ * @returns {string} formatted date
+ */
+function getLastFridayOf(date) {
+  var d = new Date(date),
+    day = d.getDay(),
+    diff = day <= 5 ? 7 - 5 + day : day - 5
+
+  d.setDate(d.getDate() - diff)
+  d.setHours(0)
+  d.setMinutes(0)
+  d.setSeconds(0)
+
+  return d.getTime()
+}
+
 /**
  * strip all? HTML decorations from a string
  *
