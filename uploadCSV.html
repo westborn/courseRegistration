@@ -1,0 +1,32 @@
+<body>
+  <h1>File Uploader</h1>
+  <form>
+    <input type="file" name="myFile" id="file" />
+    <br />
+    <input
+      class="blue"
+      type="button"
+      id="submitBtn"
+      value="Upload File"
+      onclick="uploadthis(this.parentNode)"
+    />
+  </form>
+
+  <input type="button" value="Close" onclick="google.script.host.close()" />
+
+  <script>
+    function uploadthis(fileForm) {
+      const file = fileForm.myFile.files[0]
+      const fr = new FileReader()
+      fr.onload = function (e) {
+        const obj = {
+          // filename: file.name,  // In your script, the filename is given at GAS side. So I removed this.
+          mimeType: file.type,
+          bytes: [...new Int8Array(e.target.result)],
+        }
+        google.script.run.withSuccessHandler((e) => console.log(e)).uploadFiles(obj)
+      }
+      fr.readAsArrayBuffer(file)
+    }
+  </script>
+</body>

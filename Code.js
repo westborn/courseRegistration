@@ -37,6 +37,8 @@ function onOpen() {
         .createMenu('Wordpress Actions')
         .addItem('Create Course Program', 'makeCourseDetailForWordPress')
         .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
+        .addSeparator()
+        .addItem('CSV', 'loadCSVSidebar')
     )
     .addSeparator()
     .addSubMenu(
@@ -63,6 +65,14 @@ function loadHelpSidebar() {
   SpreadsheetApp.getUi().showSidebar(html)
 }
 
+/**
+ * Handler  to load CSV Uploader Sidebar.
+ */
+function loadCSVSidebar() {
+  var html = HtmlService.createHtmlOutputFromFile('uploadCSV').setTitle('CSV Upload')
+  SpreadsheetApp.getUi().showSidebar(html)
+}
+
 function btn_makeHyperlink() {
   makeHyperlink()
 }
@@ -84,14 +94,37 @@ function btn_print_courseRegister() {
  *
  */
 function appendCSV() {
-  const file = DriveApp.getFilesByName('Wordpress Enrolments.csv').next()
+  const ss = SpreadsheetApp.getActiveSpreadsheet()
+  const sheet = ss.getSheetByName('CSV')
+  const myFolder = getMyFolder(ss)
+  const files = myFolder.searchFiles('Title contains "Wordpress Enrolments.csv"')
+  const file = files.hasNext() ? files.next() : null
+
+  if (!file) {
+    const errText = 'No "Wordpress Enrolments.csv" file found in this folder'
+    showToast(errText)
+    sheet.getRange(sheet.getLastRow() + 1, 1, 1, 1).setValue(errText)
+    Logger.log(errText)
+    return
+  }
+
   const csvData = Utilities.parseCsv(file.getBlob().getDataAsString(), ',')
 
   // get just the headers that we want (columns 5 -> second last)
   // this will be the original column sequence
-  // sort alphabetic to create new column sequence
   const headers = csvData.shift()
   const courseColumns = headers.slice(5, headers.length - 1)
+  // check that the current form contains similar entries to the CSV
+  // by matching the column count of each
+  const currentColumns = sheet.getLastColumn()
+  if (courseColumns.length !== currentColumns - 3) {
+    const errText = 'CSV columns do not match current sheet'
+    showToast(errText)
+    sheet.getRange(sheet.getLastRow() + 1, 1, 1, 1).setValue(errText)
+    Logger.log(errText)
+    return
+  }
+  // sort alphabetic to create new column sequence
   const courseSequence = courseColumns.concat().sort()
   //loop thru CSV rows
   //  then thru columns of courses
@@ -109,7 +142,6 @@ function appendCSV() {
     result.push(thisRow)
   })
 
-  const sheet = SpreadsheetApp.getActiveSpreadsheet().getSheetByName('CSV')
   //clear the sheet we are going to download the events to
   sheet.insertRowBefore(1)
   const lastRow = sheet.getLastRow()
@@ -126,4 +158,14 @@ function appendCSV() {
       .getRange(i + 2, courseSequence.length + 3)
       .setFormula(`ArrayFormula(index(Members,match(TRUE, exact(A${i + 2},memberName),0),1))`)
   }
+}
+
+function uploadFiles(data) {
+  var ss = SpreadsheetApp.getActiveSpreadsheet()
+  var sheet = ss.getSheetByName('CSV')
+  const errText = 'CSV loaded'
+  showToast(errText)
+  sheet.getRange(sheet.getLastRow() + 1, 1, 1, 1).setValue(errText)
+  Logger.log(errText)
+  return
 }
