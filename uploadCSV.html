@@ -1,32 +1,110 @@
-<body>
-  <h1>File Uploader</h1>
-  <form>
-    <input type="file" name="myFile" id="file" />
-    <br />
-    <input
-      class="blue"
-      type="button"
-      id="submitBtn"
-      value="Upload File"
-      onclick="uploadthis(this.parentNode)"
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <!-- Required meta tags -->
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+
+    <!-- Bootstrap CSS -->
+    <link
+      rel="stylesheet"
+      href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+      integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+      crossorigin="anonymous"
     />
-  </form>
 
-  <input type="button" value="Close" onclick="google.script.host.close()" />
-
-  <script>
-    function uploadthis(fileForm) {
-      const file = fileForm.myFile.files[0]
-      const fr = new FileReader()
-      fr.onload = function (e) {
-        const obj = {
-          // filename: file.name,  // In your script, the filename is given at GAS side. So I removed this.
-          mimeType: file.type,
-          bytes: [...new Int8Array(e.target.result)],
-        }
-        google.script.run.withSuccessHandler((e) => console.log(e)).uploadFiles(obj)
+    <style>
+      body {
+        margin: 5px;
       }
-      fr.readAsArrayBuffer(file)
-    }
-  </script>
-</body>
+    </style>
+    <title>CSV File Upload</title>
+  </head>
+
+  <body>
+    <form>
+      <label for="file" class="btn btn-info mt-2">Select CSV to Upload</label>
+      <input
+        id="file"
+        type="file"
+        name="myFile"
+        style="
+          position: absolute;
+          height: 0.1px;
+          width: 0.1px;
+          overflow: hidden;
+          opacity: 0;
+          z-index: -1;
+        "
+      />
+      <div class="upload-fields mt-4 d-none">
+        <div class="custom-control custom-radio">
+          <input
+            type="radio"
+            class="custom-control-input"
+            name="actionCSV"
+            id="radioCreate"
+            value="create"
+          />
+          <label class="custom-control-label" for="radioCreate">Replace existing rows</label>
+        </div>
+
+        <div class="custom-control custom-radio">
+          <input
+            type="radio"
+            class="custom-control-input"
+            name="actionCSV"
+            id="radioAppend"
+            value="append"
+            checked
+          />
+          <label class="custom-control-label" for="radioAppend">Append to existing rows</label>
+        </div>
+
+        <input
+          class="btn btn-primary mt-4"
+          type="button"
+          id="submitBtn"
+          value="Upload File"
+          onclick="uploadthis()"
+        />
+      </div>
+    </form>
+
+    <script>
+      function backFromUpload(e) {
+        if (e) {
+          console.log('with error ', e)
+        }
+      }
+
+      function uploadthis() {
+        const appendOrCreate = document.querySelector('input[name="actionCSV"]:checked').value
+        console.log(appendOrCreate)
+        const myFile = document.querySelector('#file')
+        const file = myFile.files[0]
+        const fr = new FileReader()
+        fr.onload = function (e) {
+          const blob = {
+            filename: file.name,
+            mimeType: file.type,
+            bytes: [...new Int8Array(e.target.result)],
+          }
+          google.script.run
+            .withSuccessHandler((res) => backFromUpload(res))
+            .readCSV(blob, appendOrCreate)
+        }
+        fr.readAsArrayBuffer(file)
+      }
+
+      const file = document.querySelector('#file')
+      file.addEventListener('change', (e) => {
+        // Get the selected file
+        const [file] = e.target.files
+        const uploadFields = document.querySelector('.upload-fields')
+        document.querySelector('#submitBtn').value = `Upload - ${file.name}`
+        uploadFields.className = uploadFields.className.replace('d-none', 'd-block')
+      })
+    </script>
+  </body>
+</html>

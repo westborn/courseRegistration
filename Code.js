@@ -90,25 +90,12 @@ function btn_print_courseRegister() {
 }
 
 /**
- * Get a CSV file and write the transformed values to the "CSV" sheet
+ * Take the contents of a CSV file and write the transformed values to the "CSV" sheet
  *
  */
-function appendCSV() {
+function appendCSV(csvData, writeMode) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheet = ss.getSheetByName('CSV')
-  const myFolder = getMyFolder(ss)
-  const files = myFolder.searchFiles('Title contains "Wordpress Enrolments.csv"')
-  const file = files.hasNext() ? files.next() : null
-
-  if (!file) {
-    const errText = 'No "Wordpress Enrolments.csv" file found in this folder'
-    showToast(errText)
-    sheet.getRange(sheet.getLastRow() + 1, 1, 1, 1).setValue(errText)
-    Logger.log(errText)
-    return
-  }
-
-  const csvData = Utilities.parseCsv(file.getBlob().getDataAsString(), ',')
 
   // get just the headers that we want (columns 5 -> second last)
   // this will be the original column sequence
@@ -117,7 +104,7 @@ function appendCSV() {
   // check that the current form contains similar entries to the CSV
   // by matching the column count of each
   const currentColumns = sheet.getLastColumn()
-  if (courseColumns.length !== currentColumns - 3) {
+  if (courseColumns.length !== currentColumns - 3 && writeMode === 'append') {
     const errText = 'CSV columns do not match current sheet'
     showToast(errText)
     sheet.getRange(sheet.getLastRow() + 1, 1, 1, 1).setValue(errText)
@@ -129,43 +116,49 @@ function appendCSV() {
   //loop thru CSV rows
   //  then thru columns of courses
   //    output name, email, [each course in alpha sequence]
-  let result = [['name', 'email', ...courseSequence]]
+  let result = []
+  //if were deleting all existing, add the headings back
+  if (writeMode === 'create') {
+    result = [['name', 'email', ...courseSequence]]
+  }
   csvData.map((row) => {
-    let thisRow = [row[3].trim(), row[4].trim(), ...Array.from({ length: courseSequence.length })]
-    const courseCols = row.slice(5, row.length - 1)
-    courseCols.map((col, idx) => {
-      if (col != '') {
-        const newCol = courseSequence.indexOf(courseColumns[idx])
-        thisRow[newCol + 2] = '1'
-      }
-    })
-    result.push(thisRow)
+    if (writeMode === 'create' || (writeMode === 'append' && row[2] === 'unread')) {
+      let thisRow = [row[3].trim(), row[4].trim(), ...Array.from({ length: courseSequence.length })]
+      const courseCols = row.slice(5, row.length - 1)
+      courseCols.map((col, idx) => {
+        if (col != '') {
+          const newCol = courseSequence.indexOf(courseColumns[idx])
+          thisRow[newCol + 2] = '1'
+        }
+      })
+      result.push(thisRow)
+    }
   })
 
-  //clear the sheet we are going to download the events to
-  sheet.insertRowBefore(1)
-  const lastRow = sheet.getLastRow()
-  if (lastRow > 1) {
-    sheet.deleteRows(2, lastRow - 1)
+  if (writeMode === 'create') {
+    //clear the sheet we are going to download the events to
+    sheet.insertRowBefore(1)
+    const lastRow = sheet.getLastRow()
+    if (lastRow > 1) {
+      sheet.deleteRows(2, lastRow - 1)
+    }
   }
+
   //Write the data back to the sheet
-  sheet.getRange(1, 1, result.length, result[0].length).setValues(result)
+  sheet.getRange(sheet.getLastRow() + 1, 1, result.length, result[0].length).setValues(result)
 
   //set a formula in the last column as error checking
   sheet.getRange(1, courseSequence.length + 3).setValue('errorCheck')
-  for (let i = 0; i < result.length - 1; i++) {
-    sheet
-      .getRange(i + 2, courseSequence.length + 3)
-      .setFormula(`ArrayFormula(index(Members,match(TRUE, exact(A${i + 2},memberName),0),1))`)
-  }
+  const formulaStartRange = sheet.getRange(2, courseSequence.length + 3)
+  formulaStartRange.setFormula('ArrayFormula(index(Members,match(TRUE, exact(A2,memberName),0),1))')
+  const fillDownRange = sheet.getRange(2, courseSequence.length + 3, sheet.getLastRow() - 1)
+  formulaStartRange.copyTo(fillDownRange)
 }
 
-function uploadFiles(data) {
-  var ss = SpreadsheetApp.getActiveSpreadsheet()
-  var sheet = ss.getSheetByName('CSV')
-  const errText = 'CSV loaded'
-  showToast(errText)
-  sheet.getRange(sheet.getLastRow() + 1, 1, 1, 1).setValue(errText)
-  Logger.log(errText)
+function readCSV(data, writeMode) {
+  var csvFile = Utilities.newBlob(data.bytes, data.mimeType, data.filename)
+  const csvData = Utilities.parseCsv(csvFile.getDataAsString(), ',')
+
+  appendCSV(csvData, writeMode)
   return
 }
