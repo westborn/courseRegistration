@@ -36,9 +36,7 @@ function onOpen() {
       ui
         .createMenu('Wordpress Actions')
         .addItem('Create Course Program', 'makeCourseDetailForWordPress')
-        .addItem('Import "Wordpress Enrolment" CSV', 'appendCSV')
-        .addSeparator()
-        .addItem('CSV', 'loadCSVSidebar')
+        .addItem('Import Enrolment CSV', 'loadCSVSidebar')
     )
     .addSeparator()
     .addSubMenu(
@@ -97,46 +95,23 @@ function appendCSV(csvData, writeMode) {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
   const sheet = ss.getSheetByName('CSV')
 
-  // get just the headers that we want (columns 5 -> second last)
-  // this will be the original column sequence
-  const headers = csvData.shift()
-  const courseColumns = headers.slice(5, headers.length - 1)
-  // check that the current form contains similar entries to the CSV
-  // by matching the column count of each
-  const currentColumns = sheet.getLastColumn()
-  if (courseColumns.length !== currentColumns - 3 && writeMode === 'append') {
-    const errText = 'CSV columns do not match current sheet'
-    showToast(errText)
-    sheet.getRange(sheet.getLastRow() + 1, 1, 1, 1).setValue(errText)
-    Logger.log(errText)
-    return
-  }
-  // sort alphabetic to create new column sequence
-  const courseSequence = courseColumns.concat().sort()
-  //loop thru CSV rows
-  //  then thru columns of courses
-  //    output name, email, [each course in alpha sequence]
+  //get courseDetail sheet
+  const courseData = ss.getSheetByName('CourseDetails').getDataRange().getValues()
+  const allCourses = getJsonArrayFromData(courseData)
+  //get just the header tags from  the Course Details sheet
+  headers = allCourses.map((course) => course.tag)
+
+  //turn the CSV into objects
+  const csvArray = getJsonArrayFromData(csvData)
+
+  //sort headers alphabetic to create correct column sequence
+  const courseSequence = headers.sort()
   let result = []
-  //if were deleting all existing, add the headings back
+
+  //if we're deleting all existing, add the headings back
+  //clear the sheet we are going to download to
   if (writeMode === 'create') {
     result = [['name', 'email', ...courseSequence]]
-  }
-  csvData.map((row) => {
-    if (writeMode === 'create' || (writeMode === 'append' && row[2] === 'unread')) {
-      let thisRow = [row[3].trim(), row[4].trim(), ...Array.from({ length: courseSequence.length })]
-      const courseCols = row.slice(5, row.length - 1)
-      courseCols.map((col, idx) => {
-        if (col != '') {
-          const newCol = courseSequence.indexOf(courseColumns[idx])
-          thisRow[newCol + 2] = '1'
-        }
-      })
-      result.push(thisRow)
-    }
-  })
-
-  if (writeMode === 'create') {
-    //clear the sheet we are going to download the events to
     sheet.insertRowBefore(1)
     const lastRow = sheet.getLastRow()
     if (lastRow > 1) {
@@ -144,15 +119,30 @@ function appendCSV(csvData, writeMode) {
     }
   }
 
+  //loop thru CSV rows (use all entries for "create" else use "unread" entries)
+  //  then thru columns of courses
+  //    output name, email, [each course]
+  csvArray.map((entry) => {
+    if (writeMode === 'create' || (writeMode === 'append' && entry.Status === 'unread')) {
+      const thisRow = courseSequence.map((col) => {
+        return entry[col] ? '1' : ''
+      })
+      result.push([entry.Name.trim(), entry.Email.trim(), ...thisRow])
+    }
+  })
+
   //Write the data back to the sheet
   sheet.getRange(sheet.getLastRow() + 1, 1, result.length, result[0].length).setValues(result)
 
-  //set a formula in the last column as error checking
-  sheet.getRange(1, courseSequence.length + 3).setValue('errorCheck')
-  const formulaStartRange = sheet.getRange(2, courseSequence.length + 3)
-  formulaStartRange.setFormula('ArrayFormula(index(Members,match(TRUE, exact(A2,memberName),0),1))')
+  //set a formula in the last 2 columns as error checking
+  sheet.getRange(1, courseSequence.length + 3, 1, 2).setValues([['nameCheck', 'emailCheck']])
+  const formulas = [
+    'ArrayFormula(index(Members,match(TRUE, exact(A2,memberName),0),1))',
+    'ArrayFormula(index(Members,match(TRUE, exact(B2,memberEmail),0),1))',
+  ]
+  sheet.getRange(2, courseSequence.length + 3, 1, 2).setFormulas([formulas])
   const fillDownRange = sheet.getRange(2, courseSequence.length + 3, sheet.getLastRow() - 1)
-  formulaStartRange.copyTo(fillDownRange)
+  sheet.getRange(2, courseSequence.length + 3, 1, 2).copyTo(fillDownRange)
 }
 
 function readCSV(data, writeMode) {
