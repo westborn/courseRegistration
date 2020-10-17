@@ -498,14 +498,14 @@ function createCourseDetails() {
     return acc
   }, {})
 
-  // SEarch for a string and return  the next word
+  // Search for a string and return  the next word
   let getWordAfter = (str, searchText) => {
     const re = new RegExp(`${searchText}\\s(\\S+)`, 'i')
     const found = str.match(re)
     return found && found.index ? found[1] : ''
   }
 
-  const rows = Object.values(courses).map((index) => {
+  const rows = Object.values(courses).map((index, tagIndex) => {
     // Title
     const searchForTitle = sortedSessions[index].summary.match(/with(?!.*with)/i)
     let title = ''
@@ -548,6 +548,7 @@ function createCourseDetails() {
       phone: member.mobile || '',
       email: member.email || '',
       contact: sortedSessions[index].contact || 'No Contact',
+      tag: String.fromCharCode(tagIndex + 65) + (tagIndex + 1),
     }
   })
 

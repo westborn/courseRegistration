@@ -1,5 +1,5 @@
 /**
- * simple loop to call "mergeDraftEmail" for every row in the database
+ * simple loop to call "draftEnrolleeEmail" for every row in the database
  */
 function allHTMLRegistrationEmails() {
   const ss = SpreadsheetApp.getActiveSpreadsheet()
@@ -9,7 +9,7 @@ function allHTMLRegistrationEmails() {
   // drop the last item - it is the Grand Total
   attendees.length = lastAttendeeIndex - 1
   attendees.forEach((attendee) => {
-    mergeDraftEmail('TEMPLATE - Course Registration Information', {
+    draftEnrolleeEmail('TEMPLATE - Course Registration Information', {
       memberName: attendee[0],
       subject: 'U3A Bermagui - Course Registration Information',
     })
@@ -17,7 +17,7 @@ function allHTMLRegistrationEmails() {
 }
 
 /**
- * simple loop to call "mergeDraftEmail" for selected rows in the database
+ * simple loop to call "draftEnrolleeEmail" for selected rows in the database
  */
 function selectedHTMLRegistrationEmails() {
   // Must select from the Database sheet and must be in column "E" (5)
@@ -28,7 +28,7 @@ function selectedHTMLRegistrationEmails() {
   const { sheetSelected, rangeSelected } = res
   let attendees = sheetSelected.getRange(rangeSelected).getDisplayValues()
   attendees.forEach((attendee) => {
-    mergeDraftEmail('TEMPLATE - Course Registration Information', {
+    draftEnrolleeEmail('TEMPLATE - Course Registration Information', {
       memberName: attendee[0],
       subject: 'U3A Bermagui - Course Registration Information',
     })
@@ -36,16 +36,15 @@ function selectedHTMLRegistrationEmails() {
 }
 
 /**
- * Get an existing draft temmplate and merge with a replacement object to produce a new draft email
+ * Get an existing draft temmplate and merge with a replacement object to produce an Enrollee Email
+ * with details of all the courses a member is attanding
  * @param {string} templateEmailSubject (optional) for the email draft template
  * @param {object} emailFields data fields for the new draft
  * @param {object} emailFields.memberName
  * @param {object} emailFields.subject
- * @param {object} emailFields.bcc
- * @param {object} emailFields.cc
  *
  */
-function mergeDraftEmail(
+function draftEnrolleeEmail(
   templateEmailSubject = 'TEMPLATE - Course Registration Information',
   emailFields
 ) {
