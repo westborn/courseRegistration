@@ -13,7 +13,6 @@ function buildDB() {
   const fromSheet = ss.getSheetByName('RegistrationMaster')
   const fromData = fromSheet.getDataRange().getValues()
   const headers = fromData.shift()
-  const totals = fromData.pop()
   //drop name, email, and count columns to get CourseNames ONLY
   courseNames = headers.slice(2, headers.length - 1)
   //loop thru rows
